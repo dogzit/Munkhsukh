@@ -167,6 +167,8 @@ export default function AdminHomePage() {
   const [showLogout, setShowLogout] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [busEnabled, setBusEnabled] = useState<boolean | null>(null);
+  const [savingBus, setSavingBus] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -182,6 +184,37 @@ export default function AdminHomePage() {
     })();
   }, []);
 
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setBusEnabled(!!d?.busBookingEnabled))
+      .catch(() => setBusEnabled(false));
+  }, []);
+
+  async function toggleBusBooking(next: boolean) {
+    const prev = busEnabled;
+    setBusEnabled(next);
+    setSavingBus(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ busBookingEnabled: next }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(
+        next
+          ? "Автобусны захиалга нүүр хуудсанд гарлаа"
+          : "Автобусны захиалга нуугдлаа",
+      );
+    } catch {
+      setBusEnabled(prev);
+      toast.error("Тохиргоо хадгалахад алдаа гарлаа");
+    } finally {
+      setSavingBus(false);
+    }
+  }
+
   const cards = stats ? STAT_CARDS(stats.cards) : [];
 
   return (
@@ -190,7 +223,7 @@ export default function AdminHomePage() {
       <AppHeader
         onBack={() => router.push("/")}
         title="Dashboard"
-        subtitle="12Д ангийн удирдлага"
+        subtitle="11A ангийн удирдлага"
         icon={
           <span className="px-2 py-1 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-500 text-[10px] font-black tracking-widest shrink-0">
             ADMIN
@@ -444,6 +477,54 @@ export default function AdminHomePage() {
             </div>
           </section>
         </div>
+
+        {/* ── Тохиргоо ── */}
+        <section>
+          <SectionHeader title="Тохиргоо" />
+          <div className="rounded-2xl border border-border-subtle bg-surface-elevated p-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  busEnabled
+                    ? "bg-gradient-to-br from-pink-600 to-rose-500"
+                    : "bg-surface-alt border border-border"
+                }`}
+              >
+                <Bus
+                  size={18}
+                  className={busEnabled ? "text-white" : "text-on-surface-muted"}
+                />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold">Автобусны захиалга</p>
+                <p className="text-[11px] text-on-surface-muted">
+                  Нүүр хуудас дээр харагдах эсэх
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={busEnabled === true}
+              disabled={busEnabled === null || savingBus}
+              onClick={() => toggleBusBooking(!(busEnabled === true))}
+              className={`relative w-12 h-7 rounded-full shrink-0 transition-colors duration-300
+                ${
+                  busEnabled
+                    ? "bg-pink-600"
+                    : "bg-surface-alt border border-border"
+                }
+                ${busEnabled === null || savingBus ? "opacity-50 cursor-wait" : ""}`}
+            >
+              <span
+                className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white shadow
+                  transition-all duration-300 ${
+                  busEnabled ? "left-[calc(100%-1.375rem)]" : "left-1"
+                }`}
+              />
+            </button>
+          </div>
+        </section>
 
         {/* ── Хурдан үйлдлүүд (mobile дээр sidebar-г орлоно) ── */}
         <section className="lg:hidden">

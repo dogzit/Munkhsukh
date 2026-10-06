@@ -31,7 +31,7 @@ function getTransporter() {
 
 function fromAddress() {
   const user = process.env.EMAIL_USER || "";
-  const name = process.env.EMAIL_FROM_NAME || "12Д Ангийн Апп";
+  const name = process.env.EMAIL_FROM_NAME || "11A Ангийн Апп";
   return `${name} <${user}>`;
 }
 
@@ -80,11 +80,11 @@ export async function sendMail({ to, subject, html, text, attachments }: SendArg
 }
 
 export function otpEmailTemplate(code: string) {
-  const subject = "12Д Автобус — Баталгаажуулах код";
+  const subject = "11A Ангийн Апп — Баталгаажуулах код";
   const text = `Таны email баталгаажуулах код: ${code}\nЭнэ код 10 минутын дараа хүчингүй болно.`;
   const html = `
     <div style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #0a0a0f; color: #fff;">
-      <h1 style="margin:0 0 8px 0; font-size:22px;">12Д Автобус</h1>
+      <h1 style="margin:0 0 8px 0; font-size:22px;">11A Ангийн Апп</h1>
       <p style="color:#a1a1aa; margin:0 0 24px 0;">Email баталгаажуулах код</p>
       <div style="background:#18181b; border:1px solid #27272a; border-radius:16px; padding:24px; text-align:center;">
         <p style="color:#71717a; text-transform:uppercase; letter-spacing:2px; font-size:11px; margin:0 0 8px 0; font-weight:700;">Таны код</p>
@@ -107,8 +107,8 @@ export function bookingEmailTemplate(args: {
   const { seatId, userName, qrImageUrl, qrDataUrl, ticketUrl, status } = args;
   const isPending = status === "PENDING";
   const subject = isPending
-    ? `12Д Автобус — Хүсэлт хүлээгдэж байна (${seatId})`
-    : `12Д Автобус — Захиалга баталгаажлаа (${seatId})`;
+    ? `11A Ангийн Апп — Хүсэлт хүлээгдэж байна (${seatId})`
+    : `11A Ангийн Апп — Захиалга баталгаажлаа (${seatId})`;
   const statusLine = isPending
     ? "Таны VIP хүсэлт админ хүлээгдэж байна. Батлагдсаны дараа энэ QR ажиллана."
     : "Автобусанд суух үедээ энэ QR кодыг админд үзүүлнэ үү.";
@@ -132,7 +132,7 @@ export function bookingEmailTemplate(args: {
 
   const html = `
     <div style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #0a0a0f; color: #fff;">
-      <h1 style="margin:0 0 8px 0; font-size:22px;">12Д Автобус</h1>
+      <h1 style="margin:0 0 8px 0; font-size:22px;">11A Ангийн Апп</h1>
       <p style="color:#a1a1aa; margin:0 0 24px 0;">${isPending ? "Захиалгын хүсэлт" : "Захиалга баталгаажлаа"}</p>
       <div style="background:#18181b; border:1px solid #27272a; border-radius:16px; padding:24px; text-align:center;">
         <p style="color:#71717a; text-transform:uppercase; letter-spacing:2px; font-size:11px; margin:0 0 8px 0; font-weight:700;">Суудал</p>

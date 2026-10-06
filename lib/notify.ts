@@ -79,7 +79,7 @@ export function homeworkNotifyTemplate(args: {
   const s = `📚 Шинэ даалгавар: ${args.subject}`;
   const html = `
     <div style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width:480px; margin:0 auto; padding:32px; background:#0a0a0f; color:#fff;">
-      <h1 style="margin:0 0 8px 0; font-size:22px;">12Д Ангийн Апп</h1>
+      <h1 style="margin:0 0 8px 0; font-size:22px;">11A Ангийн Апп</h1>
       <p style="color:#a1a1aa; margin:0 0 24px 0;">Шинэ даалгавар нэмэгдлээ</p>
       <div style="background:#18181b; border:1px solid #27272a; border-radius:16px; padding:20px;">
         <p style="color:#71717a; text-transform:uppercase; letter-spacing:2px; font-size:11px; margin:0 0 8px 0; font-weight:700;">${args.subject}</p>
@@ -92,7 +92,7 @@ export function homeworkNotifyTemplate(args: {
 }
 
 export function busApprovedTemplate(args: { seatId: string; ticketUrl?: string }) {
-  const s = `12Д Автобус — VIP хүсэлт батлагдлаа (${args.seatId})`;
+  const s = `11A Ангийн Апп — VIP хүсэлт батлагдлаа (${args.seatId})`;
   const ticketBtn = args.ticketUrl
     ? `<div style="text-align:center; margin-top:16px;">
          <a href="${args.ticketUrl}" style="display:inline-block; background:#3b82f6; color:#fff; text-decoration:none; padding:14px 28px; border-radius:12px; font-weight:800; font-size:13px; letter-spacing:1px; text-transform:uppercase;">Тасалбарыг нээх →</a>
@@ -100,7 +100,7 @@ export function busApprovedTemplate(args: { seatId: string; ticketUrl?: string }
     : "";
   const html = `
     <div style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width:480px; margin:0 auto; padding:32px; background:#0a0a0f; color:#fff;">
-      <h1 style="margin:0 0 8px 0; font-size:22px;">12Д Автобус</h1>
+      <h1 style="margin:0 0 8px 0; font-size:22px;">11A Ангийн Апп</h1>
       <p style="color:#a1a1aa; margin:0 0 24px 0;">VIP хүсэлт батлагдлаа</p>
       <div style="background:#18181b; border:1px solid #27272a; border-radius:16px; padding:20px; text-align:center;">
         <p style="color:#71717a; text-transform:uppercase; letter-spacing:2px; font-size:11px; margin:0 0 8px 0; font-weight:700;">Суудал</p>
@@ -117,7 +117,7 @@ export function postNotifyTemplate(args: { userName: string; text: string }) {
   const s = `📰 Шинэ мэдээ: ${args.userName}`;
   const html = `
     <div style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width:480px; margin:0 auto; padding:32px; background:#0a0a0f; color:#fff;">
-      <h1 style="margin:0 0 8px 0; font-size:22px;">12Д Ангийн Апп</h1>
+      <h1 style="margin:0 0 8px 0; font-size:22px;">11A Ангийн Апп</h1>
       <p style="color:#a1a1aa; margin:0 0 24px 0;">Шинэ мэдээ нэмэгдлээ</p>
       <div style="background:#18181b; border:1px solid #27272a; border-radius:16px; padding:20px;">
         <p style="color:#71717a; font-size:11px; margin:0 0 8px 0; font-weight:700; text-transform:uppercase; letter-spacing:2px;">${args.userName}</p>

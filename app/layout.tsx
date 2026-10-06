@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "12D Angiin Web App",
+  title: "11A Angiin Web App",
   description: "Made by Zolo",
 };
 

@@ -8,15 +8,15 @@ function cancelledEmailTemplate(args: {
   byAdmin: boolean;
 }) {
   const subject = args.byAdmin
-    ? `12Д Автобус — Захиалга цуцлагдлаа (${args.seatId})`
-    : `12Д Автобус — Захиалга цуцлагдлаа (${args.seatId})`;
+    ? `11A Ангийн Апп — Захиалга цуцлагдлаа (${args.seatId})`
+    : `11A Ангийн Апп — Захиалга цуцлагдлаа (${args.seatId})`;
   const reason = args.byAdmin
     ? "Таны захиалгыг админ цуцалсан байна."
     : "Таны захиалгыг өөрөө цуцаллаа.";
   const text = `${subject}\n\nСуудал: ${args.seatId}\n${reason}\nQR код одоо ажиллахгүй.`;
   const html = `
     <div style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #0a0a0f; color: #fff;">
-      <h1 style="margin:0 0 8px 0; font-size:22px;">12Д Автобус</h1>
+      <h1 style="margin:0 0 8px 0; font-size:22px;">11A Ангийн Апп</h1>
       <p style="color:#a1a1aa; margin:0 0 24px 0;">Захиалга цуцлагдлаа</p>
       <div style="background:#18181b; border:1px solid #27272a; border-radius:16px; padding:20px; text-align:center;">
         <p style="color:#71717a; text-transform:uppercase; letter-spacing:2px; font-size:11px; margin:0 0 8px 0; font-weight:700;">Суудал</p>

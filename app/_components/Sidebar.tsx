@@ -86,7 +86,7 @@ export default function Sidebar() {
           {!collapsed && (
             <div className="min-w-0">
               <p className="text-sm font-black bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent truncate">
-                12Д Анги
+                11A Анги
               </p>
               <p className="text-[9px] text-on-surface-muted uppercase tracking-widest">
                 Web App

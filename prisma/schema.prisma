@@ -179,6 +179,13 @@ model EmailOtp {
   @@index([expiresAt])
 }
 
+// --- App settings (key-value) ---
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
 // --- Notifications ---
 model Notification {
   id        String   @id @default(nanoid())

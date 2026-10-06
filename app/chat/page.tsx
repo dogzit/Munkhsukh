@@ -130,7 +130,7 @@ export default function ChatPage() {
     <div className="min-h-screen bg-surface text-on-surface flex flex-col font-sans">
       {/* Header */}
       <AppHeader
-        title="12Д Ангийн Чат"
+        title="11A Ангийн Чат"
         subtitle={`${messages.length} мессеж`}
       >
         <div className="ml-auto w-2 h-2 bg-emerald-500 rounded-full animate-pulse shrink-0" />

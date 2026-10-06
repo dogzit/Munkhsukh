@@ -46,7 +46,7 @@ export default function AdminSidebar() {
         <div>
           <p className="text-sm font-black leading-tight">Админ</p>
           <p className="text-[9px] text-on-surface-muted uppercase tracking-widest">
-            12Д удирдлага
+            11A удирдлага
           </p>
         </div>
       </div>

@@ -45,7 +45,7 @@ export default async function TicketPage({
       <div className="w-full max-w-sm relative z-10">
         <div className="text-center mb-5">
           <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-bold mb-2">
-            12Д Автобус
+            11A Ангийн Апп
           </p>
           <h1 className="text-3xl font-black italic tracking-tighter">TICKET</h1>
         </div>

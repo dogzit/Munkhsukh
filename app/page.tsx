@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { BookOpen, Clock, ArrowRight } from "lucide-react";
+import { BookOpen, Clock, ArrowRight, MessageCircle, Newspaper } from "lucide-react";
 import { useEffect, useState } from "react";
 import BusSeatPanel from "./_components/BusSeatPanel";
 import AppHeader from "./_components/AppHeader";
@@ -18,12 +18,21 @@ export default function HomePage() {
   const router = useRouter();
   const [now, setNow] = useState<Date | null>(null);
   const [mounted, setMounted] = useState(false);
+  // null = хараахан мэдэгдээгүй (юу ч рендэрлэхгүй)
+  const [busEnabled, setBusEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
     setNow(new Date());
     setMounted(true);
     const id = setInterval(() => setNow(new Date()), 10000);
     return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setBusEnabled(!!d?.busBookingEnabled))
+      .catch(() => setBusEnabled(false));
   }, []);
 
   const greeting = now
@@ -40,7 +49,7 @@ export default function HomePage() {
       <AppHeader
         showBack={false}
         title="Нүүр хуудас"
-        subtitle={dateStr || "12Д Анги"}
+        subtitle={dateStr || "11A Анги"}
       />
 
       {/* Background */}
@@ -69,7 +78,7 @@ export default function HomePage() {
                 <div>
                   <h1 className="text-xl font-black tracking-tight">{greeting.text}</h1>
                   <p className="text-[10px] text-on-surface-muted uppercase tracking-widest font-bold">
-                    12Д Анги
+                    11A Анги
                   </p>
                 </div>
               </div>
@@ -128,14 +137,56 @@ export default function HomePage() {
           </button>
         </div>
 
-        {/* Bus booking panel */}
-        <div
-          className={`transition-all duration-700 delay-200 ${
-            mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-          }`}
-        >
-          <BusSeatPanel />
-        </div>
+        {/* Bus booking panel — admin-аас асаах/унтраах боломжтой */}
+        {busEnabled === true ? (
+          <div
+            className={`transition-all duration-700 delay-200 ${
+              mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            }`}
+          >
+            <BusSeatPanel />
+          </div>
+        ) : busEnabled === false ? (
+          <div
+            className={`grid grid-cols-2 gap-3 transition-all duration-700 delay-200 ${
+              mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            }`}
+          >
+            <button
+              onClick={() => router.push("/chat")}
+              className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl
+                p-4 text-left flex items-center gap-3
+                hover:border-emerald-500/30 hover:bg-emerald-500/[0.04]
+                active:scale-[0.97] transition-all duration-300"
+            >
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <MessageCircle size={20} className="text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-black text-sm">Ангийн чат</p>
+                <p className="text-[10px] text-on-surface-muted">Мессеж бичих</p>
+              </div>
+              <ArrowRight size={14} className="text-on-surface-muted/40 group-hover:text-on-surface-muted transition-colors" />
+            </button>
+
+            <button
+              onClick={() => router.push("/feed")}
+              className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl
+                p-4 text-left flex items-center gap-3
+                hover:border-orange-500/30 hover:bg-orange-500/[0.04]
+                active:scale-[0.97] transition-all duration-300"
+            >
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                <Newspaper size={20} className="text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-black text-sm">Мэдээ</p>
+                <p className="text-[10px] text-on-surface-muted">Самбар үзэх</p>
+              </div>
+              <ArrowRight size={14} className="text-on-surface-muted/40 group-hover:text-on-surface-muted transition-colors" />
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );

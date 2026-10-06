@@ -147,7 +147,7 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-surface text-on-surface font-sans">
-      <AppHeader title="12Д Мэдээний самбар" />
+      <AppHeader title="11A Мэдээний самбар" />
 
       <div className="max-w-xl mx-auto px-4 py-6 space-y-6">
         {/* New post */}
