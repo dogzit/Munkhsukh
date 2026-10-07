@@ -1,17 +1,32 @@
 import prisma from "@/lib/prisma";
+import { isAdminFromHeaders } from "@/lib/requireAuth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
   try {
+    const userName = req.headers.get("x-user-name") ?? "";
     const { id: postId } = await context.params;
-    const comments = await prisma.comment.findMany({
-      where: { postId },
-      orderBy: { createdAt: "asc" },
-    });
-    return NextResponse.json(comments);
+    const [comments, post] = await Promise.all([
+      prisma.comment.findMany({
+        where: { postId },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.post.findUnique({ where: { id: postId }, select: { userName: true } }),
+    ]);
+
+    // Устгах эрх: сэтгэгдэл бичсэн хүн, постын эзэн, эсвэл админ
+    const canModerate =
+      (!!userName && post?.userName === userName) || isAdminFromHeaders(req);
+
+    return NextResponse.json(
+      comments.map((c) => {
+        const mine = !!userName && c.userName === userName;
+        return { ...c, mine, canDelete: mine || canModerate };
+      }),
+    );
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
@@ -38,7 +53,7 @@ export async function POST(
       data: { postId, userName, text },
     });
 
-    return NextResponse.json(comment, { status: 201 });
+    return NextResponse.json({ ...comment, mine: true, canDelete: true }, { status: 201 });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

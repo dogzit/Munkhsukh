@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ImagePlus, Send, Loader2, X, Heart, MessageSquare } from "lucide-react";
+import { ImagePlus, Send, Loader2, X, Heart, MessageSquare, MoreHorizontal, Pencil, Trash2, Check } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
 import AppHeader from "@/app/_components/AppHeader";
 
@@ -15,6 +15,8 @@ type Post = {
   likeCount: number;
   commentCount: number;
   liked: boolean;
+  mine: boolean;
+  canDelete: boolean;
 };
 
 type Comment = {
@@ -22,7 +24,17 @@ type Comment = {
   userName: string;
   text: string;
   createdAt: string;
+  mine: boolean;
+  canDelete: boolean;
 };
+
+// Устгахаас өмнө toast-аар баталгаажуулна
+function confirmDelete(label: string, onConfirm: () => void) {
+  toast(label, {
+    action: { label: "Устгах", onClick: onConfirm },
+    cancel: { label: "Болих", onClick: () => {} },
+  });
+}
 
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
@@ -45,6 +57,12 @@ export default function FeedPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
+  const [menuPost, setMenuPost] = useState<string | null>(null);
+  const [editingPost, setEditingPost] = useState<string | null>(null);
+  const [editPostText, setEditPostText] = useState("");
+  const [editingComment, setEditingComment] = useState<string | null>(null);
+  const [editCommentText, setEditCommentText] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const fetchPosts = async () => {
@@ -119,6 +137,7 @@ export default function FeedPage() {
     setOpenComments(postId);
     setLoadingComments(true);
     setCommentText("");
+    setEditingComment(null);
     try {
       const res = await fetch(`/api/posts/${postId}/comments`);
       if (res.ok) setComments(await res.json());
@@ -143,6 +162,79 @@ export default function FeedPage() {
         ));
       }
     } catch { toast.error("Алдаа"); }
+  };
+
+  const startEditPost = (post: Post) => {
+    setMenuPost(null);
+    setEditingPost(post.id);
+    setEditPostText(post.text);
+  };
+
+  const saveEditPost = async (post: Post) => {
+    const t = editPostText.trim();
+    if (!t && post.images.length === 0) return;
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`/api/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text: t }),
+      });
+      if (!res.ok) throw new Error();
+      setPosts((prev) => prev.map((p) => (p.id === post.id ? { ...p, text: t } : p)));
+      setEditingPost(null);
+      toast.success("Засагдлаа");
+    } catch { toast.error("Засахад алдаа гарлаа"); }
+    setSavingEdit(false);
+  };
+
+  const deletePost = (postId: string) => {
+    setMenuPost(null);
+    confirmDelete("Энэ постыг устгах уу?", async () => {
+      const prev = posts;
+      setPosts((p) => p.filter((x) => x.id !== postId));
+      if (openComments === postId) setOpenComments(null);
+      try {
+        const res = await fetch(`/api/posts/${postId}`, { method: "DELETE" });
+        if (!res.ok) throw new Error();
+        toast.info("Устгагдлаа");
+      } catch {
+        toast.error("Устгахад алдаа гарлаа");
+        setPosts(prev);
+      }
+    });
+  };
+
+  const saveEditComment = async (commentId: string) => {
+    const t = editCommentText.trim();
+    if (!t || !openComments) return;
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`/api/posts/${openComments}/comments/${commentId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text: t }),
+      });
+      if (!res.ok) throw new Error();
+      setComments((prev) => prev.map((c) => (c.id === commentId ? { ...c, text: t } : c)));
+      setEditingComment(null);
+    } catch { toast.error("Засахад алдаа гарлаа"); }
+    setSavingEdit(false);
+  };
+
+  const deleteComment = (commentId: string) => {
+    const postId = openComments;
+    if (!postId) return;
+    confirmDelete("Сэтгэгдлийг устгах уу?", async () => {
+      try {
+        const res = await fetch(`/api/posts/${postId}/comments/${commentId}`, { method: "DELETE" });
+        if (!res.ok) throw new Error();
+        setComments((prev) => prev.filter((c) => c.id !== commentId));
+        setPosts((prev) => prev.map((p) =>
+          p.id === postId ? { ...p, commentCount: Math.max(0, p.commentCount - 1) } : p
+        ));
+      } catch { toast.error("Устгахад алдаа гарлаа"); }
+    });
   };
 
   return (
@@ -218,10 +310,59 @@ export default function FeedPage() {
                   <p className="text-sm font-bold">{post.userName}</p>
                   <p className="text-[10px] text-on-surface-muted">{timeAgo(post.createdAt)}</p>
                 </div>
+
+                {(post.mine || post.canDelete) && (
+                  <div className="relative ml-auto">
+                    <button onClick={() => setMenuPost(menuPost === post.id ? null : post.id)}
+                      aria-label="Үйлдэл"
+                      className="p-2 rounded-xl text-on-surface-muted hover:bg-card-hover hover:text-on-surface transition-all">
+                      <MoreHorizontal size={16} />
+                    </button>
+                    {menuPost === post.id && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setMenuPost(null)} />
+                        <div className="absolute right-0 top-full mt-1 z-20 w-36 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden">
+                          {post.mine && (
+                            <button onClick={() => startEditPost(post)}
+                              className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-on-surface hover:bg-card-hover transition-all">
+                              <Pencil size={13} /> Засах
+                            </button>
+                          )}
+                          {post.canDelete && (
+                            <button onClick={() => deletePost(post.id)}
+                              className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-red-400 hover:bg-red-500/10 transition-all">
+                              <Trash2 size={13} /> Устгах
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Content */}
-              {post.text && <p className="text-sm leading-relaxed px-4 pb-2">{post.text}</p>}
+              {editingPost === post.id ? (
+                <div className="px-4 pb-3 space-y-2">
+                  <textarea value={editPostText} onChange={(e) => setEditPostText(e.target.value)}
+                    rows={3} autoFocus
+                    className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-sm text-on-surface outline-none resize-none focus:ring-1 focus:ring-accent/30" />
+                  <div className="flex justify-end gap-2">
+                    <button onClick={() => setEditingPost(null)}
+                      className="px-3 py-1.5 rounded-xl text-xs text-on-surface-muted hover:bg-card-hover transition-all">
+                      Болих
+                    </button>
+                    <button onClick={() => saveEditPost(post)}
+                      disabled={savingEdit || (!editPostText.trim() && post.images.length === 0)}
+                      className="px-3 py-1.5 rounded-xl bg-accent/20 border border-accent/30 text-accent text-xs font-bold
+                        hover:bg-accent/30 disabled:opacity-40 transition-all flex items-center gap-1.5">
+                      {savingEdit ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} Хадгалах
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                post.text && <p className="text-sm leading-relaxed px-4 pb-2 whitespace-pre-wrap">{post.text}</p>
+              )}
               {post.images.length > 0 && (
                 <div className={`grid gap-0.5 ${post.images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
                   {post.images.map((url, i) => (
@@ -259,9 +400,50 @@ export default function FeedPage() {
                         <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-accent text-[9px] font-bold shrink-0 mt-0.5">
                           {c.userName[0]?.toUpperCase()}
                         </div>
-                        <div>
-                          <p className="text-xs"><span className="font-bold">{c.userName}</span> <span className="text-on-surface-muted">{timeAgo(c.createdAt)}</span></p>
-                          <p className="text-sm mt-0.5">{c.text}</p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1">
+                            <p className="text-xs"><span className="font-bold">{c.userName}</span> <span className="text-on-surface-muted">{timeAgo(c.createdAt)}</span></p>
+                            {editingComment !== c.id && (
+                              <div className="ml-auto flex gap-0.5">
+                                {c.mine && (
+                                  <button onClick={() => { setEditingComment(c.id); setEditCommentText(c.text); }}
+                                    aria-label="Засах"
+                                    className="p-1 rounded-lg text-on-surface-muted/60 hover:text-on-surface hover:bg-card-hover transition-all">
+                                    <Pencil size={11} />
+                                  </button>
+                                )}
+                                {c.canDelete && (
+                                  <button onClick={() => deleteComment(c.id)}
+                                    aria-label="Устгах"
+                                    className="p-1 rounded-lg text-on-surface-muted/60 hover:text-red-400 hover:bg-red-500/10 transition-all">
+                                    <Trash2 size={11} />
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          {editingComment === c.id ? (
+                            <div className="flex gap-1.5 mt-1">
+                              <input value={editCommentText} onChange={(e) => setEditCommentText(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") saveEditComment(c.id);
+                                  if (e.key === "Escape") setEditingComment(null);
+                                }}
+                                autoFocus maxLength={500}
+                                className="flex-1 min-w-0 bg-surface border border-border rounded-lg px-2 py-1 text-sm text-on-surface outline-none focus:ring-1 focus:ring-accent/30" />
+                              <button onClick={() => saveEditComment(c.id)} disabled={savingEdit || !editCommentText.trim()}
+                                aria-label="Хадгалах"
+                                className="p-1.5 rounded-lg bg-accent/20 text-accent disabled:opacity-40 transition-all">
+                                <Check size={12} />
+                              </button>
+                              <button onClick={() => setEditingComment(null)} aria-label="Болих"
+                                className="p-1.5 rounded-lg text-on-surface-muted hover:bg-card-hover transition-all">
+                                <X size={12} />
+                              </button>
+                            </div>
+                          ) : (
+                            <p className="text-sm mt-0.5 break-words">{c.text}</p>
+                          )}
                         </div>
                       </div>
                     ))

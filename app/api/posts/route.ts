@@ -1,10 +1,12 @@
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { notifyAllUsersByEmail, postNotifyTemplate } from "@/lib/notify";
+import { isAdminFromHeaders } from "@/lib/requireAuth";
 
 export async function GET(req: NextRequest) {
   try {
     const userName = req.headers.get("x-user-name") ?? "";
+    const admin = isAdminFromHeaders(req);
 
     const posts = await prisma.post.findMany({
       orderBy: { createdAt: "desc" },
@@ -24,6 +26,8 @@ export async function GET(req: NextRequest) {
       likeCount: p._count.likes,
       commentCount: p._count.comments,
       liked: p.likes ? p.likes.length > 0 : false,
+      mine: !!userName && p.userName === userName,
+      canDelete: (!!userName && p.userName === userName) || admin,
     }));
 
     return NextResponse.json(result);
