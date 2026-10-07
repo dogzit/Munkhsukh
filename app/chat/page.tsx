@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send, Loader2, Reply, Trash2, X } from "lucide-react";
+import { Send, Loader2, Reply, Trash2, X, Pencil, Check } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
 import AppHeader from "@/app/_components/AppHeader";
 
@@ -50,6 +50,7 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false);
   const [userName, setUserName] = useState("");
   const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [editing, setEditing] = useState<Message | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [reactMenu, setReactMenu] = useState<string | null>(null);
   const [selectedMsg, setSelectedMsg] = useState<string | null>(null);
@@ -83,9 +84,41 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
+  const startEdit = (msg: Message) => {
+    setReplyTo(null);
+    setSelectedMsg(null);
+    setEditing(msg);
+    setText(msg.text);
+    inputRef.current?.focus();
+  };
+
+  const cancelEdit = () => {
+    setEditing(null);
+    setText("");
+  };
+
   const send = async () => {
     const t = text.trim();
     if (!t || sending) return;
+
+    if (editing) {
+      const id = editing.id;
+      setSending(true);
+      try {
+        const res = await fetch(`/api/chat/${id}`, {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ text: t }),
+        });
+        if (res.ok) {
+          setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, text: t } : m)));
+          cancelEdit();
+        }
+      } catch { /* */ }
+      setSending(false);
+      return;
+    }
+
     setSending(true);
     setText("");
     const replyId = replyTo?.id ?? null;
@@ -182,10 +215,10 @@ export default function ChatPage() {
                     </div>
 
                     {/* Actions — shown on hover (desktop) or tap (mobile) */}
-                    <div className={`absolute top-0 ${isMe ? "-left-20" : "-right-20"} transition-opacity flex gap-0.5
+                    <div className={`absolute top-0 ${isMe ? "-left-28" : "-right-20"} transition-opacity flex gap-0.5
                       ${selectedMsg === msg.id ? "opacity-100" : "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"}
                     `}>
-                      <button onClick={(e) => { e.stopPropagation(); setReplyTo(msg); inputRef.current?.focus(); }}
+                      <button onClick={(e) => { e.stopPropagation(); if (editing) cancelEdit(); setReplyTo(msg); inputRef.current?.focus(); }}
                         className="p-1.5 hover:bg-card-hover rounded-lg transition-all" title="Хариулах">
                         <Reply size={12} className="text-on-surface-muted" />
                       </button>
@@ -193,6 +226,12 @@ export default function ChatPage() {
                         className="p-1.5 hover:bg-card-hover rounded-lg transition-all" title="React">
                         <span className="text-xs">😊</span>
                       </button>
+                      {isMe && (
+                        <button onClick={(e) => { e.stopPropagation(); startEdit(msg); }}
+                          className="p-1.5 hover:bg-card-hover rounded-lg transition-all" title="Засах">
+                          <Pencil size={12} className="text-on-surface-muted" />
+                        </button>
+                      )}
                       {(isMe || isAdmin) && (
                         <button onClick={() => deleteMsg(msg.id)}
                           className="p-1.5 hover:bg-red-500/10 rounded-lg transition-all" title="Устгах">
@@ -245,6 +284,17 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
+      {/* Edit bar */}
+      {editing && (
+        <div className="px-4 py-2 bg-surface-elevated border-t border-border flex items-center gap-2">
+          <Pencil size={14} className="text-accent shrink-0" />
+          <p className="text-xs text-on-surface-muted truncate flex-1">
+            <span className="font-bold text-on-surface">Засаж байна</span>: {editing.text.slice(0, 60)}
+          </p>
+          <button onClick={cancelEdit} className="p-1 hover:bg-card-hover rounded-lg"><X size={14} /></button>
+        </div>
+      )}
+
       {/* Reply preview bar */}
       {replyTo && (
         <div className="px-4 py-2 bg-surface-elevated border-t border-border flex items-center gap-2">
@@ -263,8 +313,11 @@ export default function ChatPage() {
       >
         <div className="flex gap-2 max-w-2xl mx-auto">
           <input ref={inputRef} value={text} onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && send()}
-            placeholder={replyTo ? "Хариулт бичих..." : "Мессеж бичих..."}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") send();
+              if (e.key === "Escape" && editing) cancelEdit();
+            }}
+            placeholder={editing ? "Мессеж засах..." : replyTo ? "Хариулт бичих..." : "Мессеж бичих..."}
             maxLength={500}
             className="flex-1 min-w-0 bg-surface-elevated border border-border rounded-2xl px-4 py-3 text-sm
               text-on-surface placeholder:text-on-surface-muted/50 outline-none focus:ring-2 focus:ring-accent/30 transition-all" />
@@ -272,7 +325,7 @@ export default function ChatPage() {
             className="w-11 h-11 rounded-2xl bg-accent/20 border border-accent/30 text-accent
               flex items-center justify-center hover:bg-accent/30 hover:scale-105 active:scale-95
               disabled:opacity-40 disabled:hover:scale-100 transition-all">
-            {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+            {sending ? <Loader2 size={16} className="animate-spin" /> : editing ? <Check size={16} /> : <Send size={16} />}
           </button>
         </div>
       </div>

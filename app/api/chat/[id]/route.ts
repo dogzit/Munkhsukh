@@ -29,7 +29,7 @@ export async function DELETE(
   }
 }
 
-// React to message
+// Edit own message ({ text }) or react to message ({ emoji })
 export async function PATCH(
   req: NextRequest,
   context: { params: Promise<{ id: string }> },
@@ -40,6 +40,23 @@ export async function PATCH(
 
     const { id } = await context.params;
     const body = await req.json();
+
+    if (body?.text !== undefined) {
+      const text = typeof body.text === "string" ? body.text.trim() : "";
+      if (!text || text.length > 500) {
+        return NextResponse.json({ error: "Message must be 1-500 chars" }, { status: 400 });
+      }
+
+      const msg = await prisma.chatMessage.findUnique({ where: { id } });
+      if (!msg) return NextResponse.json({ error: "Not found" }, { status: 404 });
+      if (msg.userName !== userName) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      const result = await prisma.chatMessage.update({ where: { id }, data: { text } });
+      return NextResponse.json(result);
+    }
+
     const emoji = typeof body?.emoji === "string" ? body.emoji.trim() : "";
 
     if (!emoji) return NextResponse.json({ error: "emoji required" }, { status: 400 });

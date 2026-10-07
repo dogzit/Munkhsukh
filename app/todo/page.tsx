@@ -7,6 +7,9 @@ import {
   Circle,
   Trash2,
   Plus,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
 import AppHeader from "@/app/_components/AppHeader";
@@ -27,6 +30,8 @@ export default function TodoPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [userName, setUserName] = useState<string>("");
   const [newTask, setNewTask] = useState<string>("");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editText, setEditText] = useState<string>("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -112,6 +117,26 @@ export default function TodoPage() {
     }
   };
 
+  const saveEdit = async (id: number) => {
+    const task = editText.trim();
+    if (!task) return;
+    const previousTodos = [...todos];
+    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, task } : t)));
+    setEditingId(null);
+
+    try {
+      const response = await fetch(`/api/todos/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task }),
+      });
+      if (!response.ok) throw new Error();
+    } catch {
+      toast.error("Засахад алдаа гарлаа");
+      setTodos(previousTodos);
+    }
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleAddTask();
@@ -172,22 +197,67 @@ export default function TodoPage() {
                         <Circle size={24} className="text-gray-600" />
                       )}
                     </button>
-                    <span
-                      className={`text-base sm:text-lg leading-snug transition-all duration-300 break-words ${todo.completed
-                          ? "line-through text-gray-500 opacity-60"
-                          : "text-on-surface"
-                        }`}
-                    >
-                      {todo.task}
-                    </span>
+                    {editingId === todo.id ? (
+                      <input
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveEdit(todo.id);
+                          if (e.key === "Escape") setEditingId(null);
+                        }}
+                        autoFocus
+                        className="flex-1 min-w-0 bg-surface border border-border rounded-xl px-3 py-1.5 text-base sm:text-lg text-on-surface focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                      />
+                    ) : (
+                      <span
+                        className={`text-base sm:text-lg leading-snug transition-all duration-300 break-words ${todo.completed
+                            ? "line-through text-gray-500 opacity-60"
+                            : "text-on-surface"
+                          }`}
+                      >
+                        {todo.task}
+                      </span>
+                    )}
                   </div>
-                  <button
-                    onClick={() => deleteTodo(todo.id)}
-                    className="shrink-0 group-hover:opacity-100 p-2 text-gray-500 hover:text-red-500 transition-all"
-                    aria-label="Устгах"
-                  >
-                    <Trash2 size={20} />
-                  </button>
+                  {editingId === todo.id ? (
+                    <div className="flex shrink-0">
+                      <button
+                        onClick={() => saveEdit(todo.id)}
+                        disabled={!editText.trim()}
+                        className="p-2 text-emerald-400 hover:text-emerald-300 disabled:opacity-40 transition-all"
+                        aria-label="Хадгалах"
+                      >
+                        <Check size={20} />
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="p-2 text-gray-500 hover:text-on-surface transition-all"
+                        aria-label="Болих"
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex shrink-0">
+                      <button
+                        onClick={() => {
+                          setEditingId(todo.id);
+                          setEditText(todo.task);
+                        }}
+                        className="p-2 text-gray-500 hover:text-accent transition-all"
+                        aria-label="Засах"
+                      >
+                        <Pencil size={18} />
+                      </button>
+                      <button
+                        onClick={() => deleteTodo(todo.id)}
+                        className="p-2 text-gray-500 hover:text-red-500 transition-all"
+                        aria-label="Устгах"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
