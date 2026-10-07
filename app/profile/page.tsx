@@ -15,6 +15,7 @@ import {
   Lock,
   KeyRound,
   X,
+  AtSign,
 } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
 import AppHeader from "@/app/_components/AppHeader";
@@ -120,6 +121,10 @@ export default function ProfilePage() {
   const [newPin, setNewPin] = useState("");
   const [confirmNewPin, setConfirmNewPin] = useState("");
   const [changingPin, setChangingPin] = useState(false);
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [namePin, setNamePin] = useState("");
+  const [changingName, setChangingName] = useState(false);
   const [forgotPinStep, setForgotPinStep] = useState<1 | 2>(1);
   const [forgotPinName, setForgotPinName] = useState("");
   const [forgotPinNew, setForgotPinNew] = useState("");
@@ -266,6 +271,36 @@ export default function ProfilePage() {
       toast.error("Сервертэй холбогдож чадсангүй");
     }
     setChangingPin(false);
+  };
+
+  /** Нэр солих */
+  const changeName = async () => {
+    const name = newName.trim();
+    if (!name || !namePin) {
+      toast.error("Бүх талбарыг бөглөнө үү");
+      return;
+    }
+    setChangingName(true);
+    try {
+      const res = await fetch("/api/profile/username", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ newName: name, pin: namePin }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        // Login-той адил localStorage-д жижиг үсгээр хадгална
+        localStorage.setItem("name", data.name.toLowerCase());
+        toast.success("Нэр амжилттай солигдлоо!");
+        // Sidebar, header зэрэг бүх газар шинэ нэрийг уншуулахын тулд дахин ачаална
+        window.location.reload();
+        return;
+      }
+      toast.error(data.error || "Алдаа гарлаа");
+    } catch {
+      toast.error("Сервертэй холбогдож чадсангүй");
+    }
+    setChangingName(false);
   };
 
   /** PIN мартсан - 1-р шат */
@@ -636,6 +671,17 @@ export default function ProfilePage() {
             <Lock size={10} /> Аюулгүй байдал
           </h3>
           <button
+            onClick={() => {
+              setNewName(profile?.name ?? "");
+              setNamePin("");
+              setShowNameModal(true);
+            }}
+            className="w-full py-2.5 rounded-xl bg-surface border border-border text-sm font-semibold text-on-surface
+              hover:bg-card-hover hover:border-accent/30 transition-all flex items-center justify-center gap-2"
+          >
+            <AtSign size={14} /> Нэр солих
+          </button>
+          <button
             onClick={() => setShowPinModal(true)}
             className="w-full py-2.5 rounded-xl bg-surface border border-border text-sm font-semibold text-on-surface
               hover:bg-card-hover hover:border-accent/30 transition-all flex items-center justify-center gap-2"
@@ -650,6 +696,65 @@ export default function ProfilePage() {
             PIN мартсан? Сэргээх
           </button>
         </div>
+
+        {/* ── Нэр солих модал ── */}
+        {showNameModal && (
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-surface-elevated border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold flex items-center gap-2">
+                  <AtSign size={16} className="text-accent" /> Нэр солих
+                </h3>
+                <button onClick={() => setShowNameModal(false)} className="p-1 hover:bg-card-hover rounded-lg transition-all">
+                  <X size={16} />
+                </button>
+              </div>
+              <p className="text-[11px] text-on-surface-muted leading-relaxed">
+                Дараа нэвтрэхдээ шинэ нэрээ ашиглана. Таны пост, чат, todo бүгд шинэ нэр рүү шилжинэ.
+              </p>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-on-surface-muted uppercase tracking-wider">
+                    Шинэ нэр
+                  </label>
+                  <input
+                    value={newName}
+                    maxLength={30}
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    onChange={(e) => setNewName(e.target.value.replace(/\s/g, ""))}
+                    className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-on-surface outline-none focus:ring-2 focus:ring-accent/30 transition-all"
+                  />
+                  <p className="text-[10px] text-on-surface-muted/70">2-30 тэмдэгт: үсэг, тоо, _ . -</p>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-on-surface-muted uppercase tracking-wider">
+                    PIN (баталгаажуулах)
+                  </label>
+                  <input
+                    value={namePin}
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="••••"
+                    onChange={(e) => setNamePin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    onKeyDown={(e) => e.key === "Enter" && changeName()}
+                    className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-on-surface tracking-[0.3em] outline-none focus:ring-2 focus:ring-accent/30 transition-all"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={changeName}
+                disabled={changingName || !newName.trim() || newName.trim() === profile?.name || !namePin}
+                className="w-full py-3 rounded-2xl bg-accent/20 border border-accent/30 text-accent text-sm font-bold
+                  hover:bg-accent/30 disabled:opacity-40 transition-all flex items-center justify-center gap-2"
+              >
+                {changingName ? <Loader2 size={14} className="animate-spin" /> : <AtSign size={14} />}
+                Нэр солих
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── PIN солих модал ── */}
         {showPinModal && (
