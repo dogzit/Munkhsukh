@@ -96,6 +96,7 @@ model ChatMessage {
   id        String   @id @default(nanoid())
   userName  String
   text      String
+  image     String?
   replyToId String?
   reaction  String[] @default([])
   createdAt DateTime @default(now())

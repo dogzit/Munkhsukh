@@ -22,13 +22,18 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const text = typeof body?.text === "string" ? body.text.trim() : "";
     const replyToId = typeof body?.replyToId === "string" ? body.replyToId : null;
+    // Зураг нь заавал /api/upload-аар Cloudinary руу хуулагдсан байх ёстой
+    const image =
+      typeof body?.image === "string" && body.image.startsWith("https://res.cloudinary.com/")
+        ? body.image
+        : null;
 
-    if (!text || text.length > 500) {
-      return NextResponse.json({ error: "Message must be 1-500 chars" }, { status: 400 });
+    if ((!text && !image) || text.length > 500) {
+      return NextResponse.json({ error: "Message must be 1-500 chars or an image" }, { status: 400 });
     }
 
     const msg = await prisma.chatMessage.create({
-      data: { userName, text, replyToId },
+      data: { userName, text, image, replyToId },
     });
 
     return NextResponse.json(msg, { status: 201 });

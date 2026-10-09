@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send, Loader2, Reply, Trash2, X } from "lucide-react";
+import { Send, Loader2, Reply, Trash2, X, ImagePlus } from "lucide-react";
+import { toast } from "sonner";
 import Skeleton from "@/app/_components/Skeleton";
 import AppHeader from "@/app/_components/AppHeader";
 
@@ -9,6 +10,7 @@ type Message = {
   id: string;
   userName: string;
   text: string;
+  image: string | null;
   replyToId: string | null;
   reaction: string[];
   createdAt: string;
@@ -56,6 +58,9 @@ export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const fetchMessages = async () => {
     try {
@@ -83,21 +88,52 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
+  const pickImage = (file: File | undefined) => {
+    if (fileRef.current) fileRef.current.value = "";
+    if (!file) return;
+    const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
+    if (!allowed.has(file.type) || file.size >= 5 * 1024 * 1024) {
+      toast.error("Зөвхөн JPG/PNG/WEBP, 5MB хүртэл");
+      return;
+    }
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const clearImage = () => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
   const send = async () => {
     const t = text.trim();
-    if (!t || sending) return;
+    if ((!t && !imageFile) || sending) return;
     setSending(true);
-    setText("");
-    const replyId = replyTo?.id ?? null;
-    setReplyTo(null);
     try {
-      await fetch("/api/chat", {
+      let image: string | null = null;
+      if (imageFile) {
+        const fd = new FormData();
+        fd.append("file", imageFile);
+        const up = await fetch("/api/upload", { method: "POST", body: fd });
+        const j = up.ok ? await up.json() : null;
+        if (!j?.url) throw new Error("upload");
+        image = j.url;
+      }
+      const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text: t, replyToId: replyId }),
+        body: JSON.stringify({ text: t, image, replyToId: replyTo?.id ?? null }),
       });
+      if (!res.ok) throw new Error();
+      setText("");
+      setReplyTo(null);
+      clearImage();
       await fetchMessages();
-    } catch { /* */ }
+    } catch {
+      toast.error("Илгээхэд алдаа гарлаа");
+    }
     setSending(false);
   };
 
@@ -123,7 +159,9 @@ export default function ChatPage() {
   const getReplyText = (id: string | null) => {
     if (!id) return null;
     const msg = messages.find((m) => m.id === id);
-    return msg ? `${msg.userName}: ${msg.text.slice(0, 40)}${msg.text.length > 40 ? "..." : ""}` : null;
+    if (!msg) return null;
+    if (!msg.text && msg.image) return `${msg.userName}: 📷 Зураг`;
+    return `${msg.userName}: ${msg.text.slice(0, 40)}${msg.text.length > 40 ? "..." : ""}`;
   };
 
   return (
@@ -175,10 +213,16 @@ export default function ChatPage() {
                   <div className="relative">
                     <div
                       onClick={(e) => { e.stopPropagation(); setSelectedMsg(selectedMsg === msg.id ? null : msg.id); setReactMenu(null); }}
-                      className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed cursor-pointer
+                      className={`${msg.image ? "p-1" : "px-4 py-2.5"} rounded-2xl text-sm leading-relaxed cursor-pointer
                       ${isMe ? "bg-accent/20 text-on-surface rounded-br-sm" : "bg-surface-elevated border border-border-subtle text-on-surface rounded-bl-sm"}`}
                     >
-                      {msg.text}
+                      {msg.image && (
+                        <a href={msg.image} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                          <img src={msg.image} alt="" loading="lazy"
+                            className="block max-w-full w-64 max-h-80 object-cover rounded-xl" />
+                        </a>
+                      )}
+                      {msg.text && <p className={msg.image ? "px-3 pt-1.5 pb-1" : ""}>{msg.text}</p>}
                     </div>
 
                     {/* Actions — shown on hover (desktop) or tap (mobile) */}
@@ -250,7 +294,7 @@ export default function ChatPage() {
         <div className="px-4 py-2 bg-surface-elevated border-t border-border flex items-center gap-2">
           <Reply size={14} className="text-accent shrink-0" />
           <p className="text-xs text-on-surface-muted truncate flex-1">
-            <span className="font-bold text-on-surface">{replyTo.userName}</span>: {replyTo.text.slice(0, 60)}
+            <span className="font-bold text-on-surface">{replyTo.userName}</span>: {replyTo.text ? replyTo.text.slice(0, 60) : "📷 Зураг"}
           </p>
           <button onClick={() => setReplyTo(null)} className="p-1 hover:bg-card-hover rounded-lg"><X size={14} /></button>
         </div>
@@ -261,14 +305,32 @@ export default function ChatPage() {
         className="sticky bottom-[calc(3.5rem_+_env(safe-area-inset-bottom))] lg:bottom-0
           bg-surface/80 backdrop-blur-xl border-t border-border px-4 py-3"
       >
+        {imagePreview && (
+          <div className="max-w-2xl mx-auto mb-2">
+            <div className="relative inline-block">
+              <img src={imagePreview} alt="" className="h-20 rounded-xl border border-border object-cover" />
+              <button onClick={clearImage} disabled={sending} aria-label="Зураг хасах"
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                <X size={10} className="text-white" />
+              </button>
+            </div>
+          </div>
+        )}
         <div className="flex gap-2 max-w-2xl mx-auto">
+          <button onClick={() => fileRef.current?.click()} disabled={sending} aria-label="Зураг оруулах"
+            className="w-11 h-11 shrink-0 rounded-2xl bg-surface-elevated border border-border text-on-surface-muted
+              flex items-center justify-center hover:text-accent hover:bg-card-hover active:scale-95 disabled:opacity-40 transition-all">
+            <ImagePlus size={16} />
+          </button>
+          <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.webp" className="hidden"
+            onChange={(e) => pickImage(e.target.files?.[0])} />
           <input ref={inputRef} value={text} onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send()}
             placeholder={replyTo ? "Хариулт бичих..." : "Мессеж бичих..."}
             maxLength={500}
             className="flex-1 min-w-0 bg-surface-elevated border border-border rounded-2xl px-4 py-3 text-sm
               text-on-surface placeholder:text-on-surface-muted/50 outline-none focus:ring-2 focus:ring-accent/30 transition-all" />
-          <button onClick={send} disabled={!text.trim() || sending}
+          <button onClick={send} disabled={(!text.trim() && !imageFile) || sending}
             className="w-11 h-11 rounded-2xl bg-accent/20 border border-accent/30 text-accent
               flex items-center justify-center hover:bg-accent/30 hover:scale-105 active:scale-95
               disabled:opacity-40 disabled:hover:scale-100 transition-all">
