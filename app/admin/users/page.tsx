@@ -15,6 +15,8 @@ import {
   X,
   UserPlus,
   Cake,
+  Crown,
+  Star,
 } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
 import { BRANCHES } from "@/lib/branches";
@@ -29,6 +31,7 @@ type AdminUser = {
   birthDate: string | null;
   status: string;
   branch: number | null;
+  branchLeader: boolean;
   createdAt: string;
   _count: { todos: number; busBookings: number };
 };
@@ -58,38 +61,53 @@ export default function AdminUsersPage() {
     load();
   }, [load]);
 
-  const toggleRole = async (u: AdminUser) => {
+  const ROLE_LABEL: Record<string, string> = {
+    USER: "Хэрэглэгч",
+    LEADER: "Ангийн дарга",
+    ADMIN: "Админ",
+  };
+
+  const patchUser = async (
+    u: AdminUser,
+    patch: Partial<Pick<AdminUser, "role" | "branchLeader">>,
+    successMsg: string,
+  ) => {
     if (toggling) return;
-    const nextRole = u.role === "ADMIN" ? "USER" : "ADMIN";
-    // Optimistic
-    setUsers((prev) =>
-      prev.map((x) => (x.name === u.name ? { ...x, role: nextRole } : x)),
-    );
+    setUsers((prev) => prev.map((x) => (x.name === u.name ? { ...x, ...patch } : x)));
     setToggling(u.name);
     try {
       const res = await fetch("/api/admin/users", {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name: u.name, role: nextRole }),
+        body: JSON.stringify({ name: u.name, ...patch }),
       });
-      if (!res.ok) throw new Error();
-      toast.success(
-        nextRole === "ADMIN"
-          ? `${u.name} одоо АДМИН эрхтэй боллоо 👑`
-          : `${u.name} энгийн хэрэглэгч боллоо`,
-      );
-    } catch {
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error);
+      toast.success(successMsg);
+    } catch (e) {
       // Revert
       setUsers((prev) =>
         prev.map((x) =>
-          x.name === u.name ? { ...x, role: u.role } : x,
+          x.name === u.name ? { ...x, role: u.role, branchLeader: u.branchLeader } : x,
         ),
       );
-      toast.error("Эрхийг өөрчлөхөд алдаа гарлаа");
+      toast.error((e as Error).message || "Эрхийг өөрчлөхөд алдаа гарлаа");
     } finally {
       setToggling(null);
     }
   };
+
+  const setRole = (u: AdminUser, role: string) =>
+    patchUser(u, { role }, `${u.fullName || u.name} → ${ROLE_LABEL[role]}`);
+
+  const toggleBranchLeader = (u: AdminUser) =>
+    patchUser(
+      u,
+      { branchLeader: !u.branchLeader },
+      u.branchLeader
+        ? `${u.fullName || u.name} салааны даргаас чөлөөлөгдлөө`
+        : `${u.fullName || u.name} ${u.branch}-р салааны дарга боллоо ⭐`,
+    );
 
   const decide = async (u: AdminUser, action: "approve" | "decline") => {
     if (deciding) return;
@@ -125,7 +143,9 @@ export default function AdminUsersPage() {
 
   const setBranch = async (u: AdminUser, branch: number | null) => {
     const prevBranch = u.branch;
-    setUsers((prev) => prev.map((x) => (x.name === u.name ? { ...x, branch } : x)));
+    setUsers((prev) =>
+      prev.map((x) => (x.name === u.name ? { ...x, branch, branchLeader: false } : x)),
+    );
     try {
       const res = await fetch("/api/branch", {
         method: "POST",
@@ -137,7 +157,11 @@ export default function AdminUsersPage() {
         branch ? `${u.fullName || u.name} → ${branch}-р салаа` : `${u.fullName || u.name} салаагүй боллоо`,
       );
     } catch {
-      setUsers((prev) => prev.map((x) => (x.name === u.name ? { ...x, branch: prevBranch } : x)));
+      setUsers((prev) =>
+        prev.map((x) =>
+          x.name === u.name ? { ...x, branch: prevBranch, branchLeader: u.branchLeader } : x,
+        ),
+      );
       toast.error("Салаа солиход алдаа гарлаа");
     }
   };
@@ -332,37 +356,35 @@ export default function AdminUsersPage() {
                     </div>
                   </div>
 
-                  {/* Role badge + toggle */}
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span
-                      className={`hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider
-                        ${isAdmin
-                          ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
-                          : "bg-surface-alt text-on-surface-muted border border-border"
-                        }`}
-                    >
-                      {isAdmin ? <Shield size={10} /> : <UserIcon size={10} />}
-                      {isAdmin ? "Админ" : "Хэрэглэгч"}
-                    </span>
+                  {/* Эрх: хэрэглэгч / ангийн дарга / админ + салааны дарга */}
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1.5">
+                      {busy && <Loader2 size={12} className="animate-spin text-on-surface-muted" />}
+                      {isAdmin ? <Shield size={12} className="text-amber-400" /> : u.role === "LEADER" ? <Crown size={12} className="text-violet-400" /> : <UserIcon size={12} className="text-on-surface-muted" />}
+                      <select
+                        value={u.role === "ADMIN" || u.role === "LEADER" ? u.role : "USER"}
+                        onChange={(e) => setRole(u, e.target.value)}
+                        disabled={busy || isMe}
+                        aria-label="Эрх"
+                        title={isMe ? "Өөрийн эрхийг өөрчлөх боломжгүй" : undefined}
+                        className="bg-surface-alt border border-border rounded-lg px-2 py-1.5 text-xs font-bold text-on-surface outline-none disabled:opacity-50"
+                      >
+                        <option value="USER">Хэрэглэгч</option>
+                        <option value="LEADER">Ангийн дарга</option>
+                        <option value="ADMIN">Админ</option>
+                      </select>
+                    </div>
                     <button
-                      onClick={() => toggleRole(u)}
-                      disabled={busy || isMe}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95
-                        ${isAdmin
-                          ? "bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20"
-                          : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
-                        }
-                        ${busy ? "opacity-60" : ""}
-                        disabled:opacity-40 disabled:cursor-not-allowed`}
-                      title={isMe ? "Өөрийн эрхийг хасах боломжгүй" : undefined}
+                      onClick={() => toggleBranchLeader(u)}
+                      disabled={busy || u.branch === null}
+                      title={u.branch === null ? "Эхлээд салаанд оруулна уу" : undefined}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed
+                        ${u.branchLeader
+                          ? "bg-sky-500/15 border-sky-500/30 text-sky-400"
+                          : "bg-surface-alt border-border text-on-surface-muted hover:bg-card-hover"}`}
                     >
-                      {busy ? (
-                        <Loader2 size={12} className="animate-spin" />
-                      ) : isAdmin ? (
-                        "Эрх хасах"
-                      ) : (
-                        "Админ болгох"
-                      )}
+                      <Star size={10} className={u.branchLeader ? "fill-sky-400" : ""} />
+                      Салааны дарга
                     </button>
                   </div>
                 </div>
@@ -376,13 +398,21 @@ export default function AdminUsersPage() {
         {/* Info */}
         <div className="mt-6 bg-surface-elevated border border-border-subtle rounded-2xl p-4">
           <p className="text-[10px] font-black text-on-surface-muted uppercase tracking-widest mb-2">
-            Админ эрхийн боломж
+            Эрхийн түвшин
           </p>
+          <p className="text-xs font-bold text-amber-400 mt-2">🛡 Админ</p>
           <ul className="text-xs text-on-surface-muted space-y-1 list-disc list-inside">
-            <li>Хичээлийн хуваарь, даалгавар нэмэх/засах/устгах</li>
-            <li>Автобусны суудал удирдах, QR баталгаажуулах</li>
-            <li>Мэдэгдэл илгээх, өгөгдөл устгах</li>
-            <li>Чат мессеж бүрмөсөн устгах</li>
+            <li>Админ панел, хуваарь, автобус, мэдэгдэл, өгөгдөл</li>
+            <li>Хэрэглэгчийн эрх, бүртгэлийн хүсэлт, салаа</li>
+          </ul>
+          <p className="text-xs font-bold text-violet-400 mt-3">👑 Ангийн дарга</p>
+          <ul className="text-xs text-on-surface-muted space-y-1 list-disc list-inside">
+            <li>Даалгавар нэмэх/засах/устгах (админ панелгүй)</li>
+            <li>Мэдээний нийтлэл, чат мессеж устгах</li>
+          </ul>
+          <p className="text-xs font-bold text-sky-400 mt-3">⭐ Салааны дарга</p>
+          <ul className="text-xs text-on-surface-muted space-y-1 list-disc list-inside">
+            <li>Өөрийн салааныхны тавьсан даалгаврыг шалгаж ✓ тэмдэглэх</li>
           </ul>
         </div>
       </div>

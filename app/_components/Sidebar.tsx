@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import LogoutConfirm from "./LogoutConfirm";
+import { useMyRoles } from "./useMyRoles";
 import {
   Home,
   BookOpen,
@@ -16,6 +17,7 @@ import {
   Settings,
   Trophy,
   Users,
+  Crown,
   LogOut,
   PanelLeftClose,
   PanelLeft,
@@ -42,6 +44,7 @@ function isActive(pathname: string, href: string) {
 }
 
 export default function Sidebar() {
+  const { isLeader } = useMyRoles();
   const router = useRouter();
   const pathname = usePathname();
   const [showLogout, setShowLogout] = useState(false);
@@ -120,7 +123,12 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto overflow-x-hidden">
-        {navItems.map((item) => {
+        {[
+          ...navItems,
+          ...(isLeader
+            ? [{ icon: <Crown size={20} />, label: "Даалгавар удирдах", href: "/manage/homework" }]
+            : []),
+        ].map((item) => {
           const active = isActive(pathname, item.href);
           return (
             <button

@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { canManageClass } from "@/lib/roles";
 import { NextResponse } from "next/server";
 import { isNonEmptyString } from "@/lib/validation";
 
@@ -36,6 +37,12 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
+    if (!(await canManageClass(req))) {
+      return NextResponse.json(
+        { error: "Зөвхөн админ эсвэл ангийн дарга" } satisfies ApiError,
+        { status: 403 },
+      );
+    }
     const { id } = await context.params;
 
     const raw: unknown = await req.json().catch(() => null);
@@ -113,10 +120,16 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   context: { params: Promise<{ id: string }> },
 ) {
   try {
+    if (!(await canManageClass(req))) {
+      return NextResponse.json(
+        { error: "Зөвхөн админ эсвэл ангийн дарга" } satisfies ApiError,
+        { status: 403 },
+      );
+    }
     const { id } = await context.params;
     await prisma.hwork.delete({ where: { id } });
     return NextResponse.json({ ok: true });

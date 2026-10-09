@@ -44,6 +44,8 @@ export async function GET(req: NextRequest) {
         avatar: p.user.avatar,
         text: p.text,
         images: p.images,
+        checkedBy: p.checkedBy,
+        checkedAt: p.checkedAt,
         createdAt: p.createdAt,
       })),
     );

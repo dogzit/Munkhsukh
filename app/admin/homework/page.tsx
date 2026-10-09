@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -113,6 +113,8 @@ const sc = (s: string) => SUBJECT_COLORS[s] || SUBJECT_COLORS.default;
 
 export default function AdminHomeworkListPage() {
   const router = useRouter();
+  // /admin/homework эсвэл ангийн даргын /manage/homework аль алинд нь ажиллана
+  const base = usePathname().startsWith("/manage") ? "/manage" : "/admin";
   const [data, setData] = useState<HworkItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -195,7 +197,7 @@ export default function AdminHomeworkListPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-10">
           <button
-            onClick={() => router.push("/admin")}
+            onClick={() => router.push(base === "/manage" ? "/" : "/admin")}
             className="p-2 hover:bg-card-hover rounded-full transition-all duration-200 hover:scale-110 active:scale-95 group"
           >
             <ArrowLeft
@@ -238,7 +240,7 @@ export default function AdminHomeworkListPage() {
             <button
               onClick={() => {
                 toast.info("Даалгавар нэмэх...", { duration: 800 });
-                setTimeout(() => router.push("/admin/homework/add"), 300);
+                setTimeout(() => router.push(`${base}/homework/add`), 300);
               }}
               className="px-3 py-2.5 rounded-xl bg-emerald-600/20 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-600/30 hover:scale-105 active:scale-95 transition-all"
             >
@@ -300,7 +302,7 @@ export default function AdminHomeworkListPage() {
                       duration: 800,
                     });
                     setTimeout(
-                      () => router.push(`/admin/homework/${dateKey}`),
+                      () => router.push(`${base}/homework/${dateKey}`),
                       300,
                     );
                   }}

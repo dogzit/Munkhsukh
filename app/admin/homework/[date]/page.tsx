@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -192,6 +192,7 @@ function ImageModal({
 
 export default function AdminHomeworkDatePage() {
   const router = useRouter();
+  const base = usePathname().startsWith("/manage") ? "/manage" : "/admin";
   const params = useParams();
   const dateKey = params?.date as string;
 
@@ -370,7 +371,7 @@ export default function AdminHomeworkDatePage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-10">
           <button
-            onClick={() => router.push("/admin/homework")}
+            onClick={() => router.push(`${base}/homework`)}
             className="p-2 hover:bg-card-hover rounded-full transition-all duration-200 hover:scale-110 active:scale-95 group"
           >
             <ArrowLeft

@@ -17,27 +17,39 @@ export async function GET(req: NextRequest) {
     }
 
     const [me, users] = await Promise.all([
-      prisma.user.findUnique({ where: { name: userName }, select: { branch: true } }),
+      prisma.user.findUnique({
+        where: { name: userName },
+        select: { branch: true, branchLeader: true },
+      }),
       prisma.user.findMany({
         where: { name: { not: "admin" }, status: "APPROVED", branch: { not: null } },
-        select: { name: true, fullName: true, avatar: true, branch: true },
+        select: { name: true, fullName: true, avatar: true, branch: true, branchLeader: true },
         orderBy: { name: "asc" },
       }),
     ]);
 
-    const members: Record<number, { name: string; fullName: string | null; avatar: string | null }[]> = {
+    const members: Record<
+      number,
+      { name: string; fullName: string | null; avatar: string | null; branchLeader: boolean }[]
+    > = {
       1: [],
       2: [],
       3: [],
     };
     for (const u of users) {
       if (u.branch && members[u.branch]) {
-        members[u.branch].push({ name: u.name, fullName: u.fullName, avatar: u.avatar });
+        members[u.branch].push({
+          name: u.name,
+          fullName: u.fullName,
+          avatar: u.avatar,
+          branchLeader: u.branchLeader,
+        });
       }
     }
 
     return NextResponse.json({
       myBranch: me?.branch ?? null,
+      amBranchLeader: me?.branchLeader ?? false,
       isAdmin: isAdminFromHeaders(req),
       members,
     });
@@ -98,7 +110,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "branch required" } satisfies ApiError, { status: 400 });
     }
 
-    await prisma.user.update({ where: { name: target }, data: { branch } });
+    // Салаа солигдвол салааны даргын эрх хасагдана
+    await prisma.user.update({
+      where: { name: target },
+      data: { branch, ...(branch !== user.branch ? { branchLeader: false } : {}) },
+    });
     return NextResponse.json({ ok: true, branch });
   } catch (e) {
     console.error(e);

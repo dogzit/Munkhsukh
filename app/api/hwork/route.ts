@@ -3,6 +3,7 @@ import { NextResponse, after } from "next/server";
 import { isNonEmptyString } from "@/lib/validation";
 import { homeworkNotifyTemplate, notifyAllUsersByEmail } from "@/lib/notify";
 import { pushToAllUsers } from "@/lib/push";
+import { canManageClass } from "@/lib/roles";
 
 type ApiError = { error: string };
 
@@ -74,6 +75,12 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    if (!(await canManageClass(req))) {
+      return NextResponse.json(
+        { error: "Зөвхөн админ эсвэл ангийн дарга" } satisfies ApiError,
+        { status: 403 },
+      );
+    }
     const raw: unknown = await req.json().catch(() => null);
     if (!raw || typeof raw !== "object") {
       return NextResponse.json({ error: "Invalid body" } satisfies ApiError, {

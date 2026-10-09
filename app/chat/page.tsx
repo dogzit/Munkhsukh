@@ -5,6 +5,7 @@ import { Send, Loader2, Reply, Trash2, X, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import Skeleton from "@/app/_components/Skeleton";
 import AppHeader from "@/app/_components/AppHeader";
+import { useMyRoles } from "@/app/_components/useMyRoles";
 
 type Message = {
   id: string;
@@ -52,7 +53,8 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false);
   const [userName, setUserName] = useState("");
   const [replyTo, setReplyTo] = useState<Message | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  // Админ болон ангийн дарга бүх мессежийг устгана
+  const { canManage: isAdmin } = useMyRoles();
   const [reactMenu, setReactMenu] = useState<string | null>(null);
   const [selectedMsg, setSelectedMsg] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -74,7 +76,6 @@ export default function ChatPage() {
     // Effect-ийн шууд setState-ийг зөрүүлэхгүйн тулд timeout ашиглана
     const t = setTimeout(() => {
       setUserName(localStorage.getItem("name") ?? "");
-      setIsAdmin(localStorage.getItem("role") === "ADMIN");
       fetchMessages();
     }, 0);
     intervalRef.current = setInterval(fetchMessages, 3000);

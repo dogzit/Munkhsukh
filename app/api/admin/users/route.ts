@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
         birthDate: true,
         status: true,
         branch: true,
+        branchLeader: true,
         createdAt: true,
         _count: { select: { todos: true, busBookings: true } },
       },
@@ -44,8 +45,9 @@ export async function GET(req: NextRequest) {
 
 /**
  * PATCH /api/admin/users
- * Body: { name: string, role: "ADMIN" | "USER" }
- * Хэрэглэгчийн эрхийг өөрчлөх (өөрийн эрхийг хасахгүй)
+ * Body: { name: string, role?: "ADMIN" | "LEADER" | "USER", branchLeader?: boolean }
+ * Хэрэглэгчийн эрх (админ / ангийн дарга / хэрэглэгч) болон салааны
+ * даргын эрхийг өөрчлөх (өөрийн админ эрхийг хасахгүй)
  */
 export async function PATCH(req: NextRequest) {
   try {
@@ -58,27 +60,41 @@ export async function PATCH(req: NextRequest) {
     const body = (await req.json().catch(() => null)) as {
       name?: unknown;
       role?: unknown;
+      branchLeader?: unknown;
     } | null;
 
     const name =
       body && typeof body.name === "string" ? body.name.trim() : "";
     const role = body?.role;
+    const branchLeader = body?.branchLeader;
 
     if (!name) {
       return NextResponse.json({ error: "name required" } satisfies ApiError, {
         status: 400,
       });
     }
-    if (role !== "ADMIN" && role !== "USER") {
+    if (role !== undefined && role !== "ADMIN" && role !== "LEADER" && role !== "USER") {
       return NextResponse.json(
-        { error: "role must be ADMIN or USER" } satisfies ApiError,
+        { error: "role must be ADMIN, LEADER or USER" } satisfies ApiError,
+        { status: 400 },
+      );
+    }
+    if (branchLeader !== undefined && typeof branchLeader !== "boolean") {
+      return NextResponse.json(
+        { error: "branchLeader must be boolean" } satisfies ApiError,
+        { status: 400 },
+      );
+    }
+    if (role === undefined && branchLeader === undefined) {
+      return NextResponse.json(
+        { error: "role or branchLeader required" } satisfies ApiError,
         { status: 400 },
       );
     }
 
     // Өөрийн эрхийг хасахаас сэргийлнэ
     const selfName = req.headers.get("x-user-name");
-    if (selfName && selfName === name && role === "USER") {
+    if (selfName && selfName === name && role !== undefined && role !== "ADMIN") {
       return NextResponse.json(
         { error: "Өөрийн эрхийг хасах боломжгүй" } satisfies ApiError,
         { status: 400 },
@@ -92,10 +108,20 @@ export async function PATCH(req: NextRequest) {
       });
     }
 
+    if (branchLeader === true && user.branch === null) {
+      return NextResponse.json(
+        { error: "Эхлээд салаанд оруулна уу" } satisfies ApiError,
+        { status: 400 },
+      );
+    }
+
     const updated = await prisma.user.update({
       where: { name },
-      data: { role },
-      select: { name: true, role: true },
+      data: {
+        ...(role !== undefined ? { role } : {}),
+        ...(branchLeader !== undefined ? { branchLeader } : {}),
+      },
+      select: { name: true, role: true, branchLeader: true },
     });
 
     return NextResponse.json(updated);

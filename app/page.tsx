@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { BookOpen, Clock, ArrowRight, MessageCircle, Newspaper, Users } from "lucide-react";
+import { BookOpen, Clock, ArrowRight, MessageCircle, Newspaper, Users, Crown } from "lucide-react";
+import { useMyRoles } from "./_components/useMyRoles";
 import { useEffect, useState } from "react";
 import BusSeatPanel from "./_components/BusSeatPanel";
 import AppHeader from "./_components/AppHeader";
@@ -16,6 +17,7 @@ function getGreeting(hour: number) {
 
 export default function HomePage() {
   const router = useRouter();
+  const { isLeader } = useMyRoles();
   const [now, setNow] = useState<Date | null>(null);
   const [mounted, setMounted] = useState(false);
   // null = хараахан мэдэгдээгүй (юу ч рендэрлэхгүй)
@@ -135,6 +137,25 @@ export default function HomePage() {
             </div>
             <ArrowRight size={14} className="text-on-surface-muted/40 group-hover:text-on-surface-muted transition-colors" />
           </button>
+
+          {isLeader && (
+            <button
+              onClick={() => router.push("/manage/homework")}
+              className="col-span-2 group relative overflow-hidden rounded-2xl border border-violet-500/20 bg-violet-500/[0.04] backdrop-blur-xl
+                p-4 text-left flex items-center gap-3
+                hover:border-violet-500/40 hover:bg-violet-500/[0.08]
+                active:scale-[0.97] transition-all duration-300"
+            >
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-violet-500/20">
+                <Crown size={20} className="text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-black text-sm">Даалгавар удирдах</p>
+                <p className="text-[10px] text-on-surface-muted">Ангийн дарга — нэмэх, засах, устгах</p>
+              </div>
+              <ArrowRight size={14} className="text-on-surface-muted/40 group-hover:text-on-surface-muted transition-colors" />
+            </button>
+          )}
 
           <button
             onClick={() => router.push("/branch")}

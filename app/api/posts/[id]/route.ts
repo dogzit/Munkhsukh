@@ -1,10 +1,10 @@
 import prisma from "@/lib/prisma";
-import { isAdminFromHeaders } from "@/lib/requireAuth";
+import { canManageClass } from "@/lib/roles";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
  * DELETE /api/posts/:id
- * Өөрийн нийтлэлийг устгана (админ бүх нийтлэлийг устгаж болно).
+ * Өөрийн нийтлэлийг устгана (админ, ангийн дарга бүгдийг устгаж болно).
  * Like, сэтгэгдэл нь cascade-аар хамт устна.
  */
 export async function DELETE(
@@ -20,7 +20,7 @@ export async function DELETE(
     const post = await prisma.post.findUnique({ where: { id }, select: { userName: true } });
     if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    if (post.userName !== userName && !isAdminFromHeaders(req)) {
+    if (post.userName !== userName && !(await canManageClass(req))) {
       return NextResponse.json({ error: "Зөвхөн өөрийн нийтлэлийг устгана" }, { status: 403 });
     }
 

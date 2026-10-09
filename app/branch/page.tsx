@@ -2,15 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ImagePlus, Send, Loader2, X, Trash2, Users, Lock } from "lucide-react";
+import { ImagePlus, Send, Loader2, X, Trash2, Users, Lock, CheckCircle2, Circle, Star } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
 import AppHeader from "@/app/_components/AppHeader";
 import { BRANCHES, branchName } from "@/lib/branches";
 
-type Member = { name: string; fullName: string | null; avatar: string | null };
+type Member = { name: string; fullName: string | null; avatar: string | null; branchLeader: boolean };
 
 type BranchInfo = {
   myBranch: number | null;
+  amBranchLeader: boolean;
   isAdmin: boolean;
   members: Record<number, Member[]>;
 };
@@ -22,6 +23,8 @@ type BranchPost = {
   avatar: string | null;
   text: string;
   images: string[];
+  checkedBy: string | null;
+  checkedAt: string | null;
   createdAt: string;
 };
 
@@ -60,6 +63,7 @@ export default function BranchPage() {
   const [posting, setPosting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [checking, setChecking] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const loadInfo = useCallback(async () => {
@@ -177,6 +181,29 @@ export default function BranchPage() {
     setConfirmDelete(null);
   };
 
+  const toggleCheck = async (post: BranchPost) => {
+    if (checking) return;
+    setChecking(post.id);
+    try {
+      const res = await fetch(`/api/branch/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ checked: !post.checkedBy }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error);
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === post.id ? { ...p, checkedBy: data.checkedBy, checkedAt: data.checkedAt } : p,
+        ),
+      );
+      if (data.checkedBy) toast.success("Шалгасан ✓");
+    } catch (e) {
+      toast.error((e as Error).message || "Алдаа гарлаа");
+    }
+    setChecking(null);
+  };
+
   // ── Ачаалж байна ──
   if (!info) {
     return (
@@ -234,6 +261,8 @@ export default function BranchPage() {
   const current = BRANCHES.find((b) => b.id === viewing) ?? BRANCHES[0];
   const members = info.members[current.id] ?? [];
   const canPost = info.myBranch === current.id;
+  const canCheck = info.isAdmin || (info.amBranchLeader && info.myBranch === current.id);
+  const leaders = members.filter((m) => m.branchLeader);
 
   return (
     <div className="min-h-screen bg-surface text-on-surface font-sans">
@@ -261,6 +290,11 @@ export default function BranchPage() {
             <p className="text-[11px] text-white/80 flex items-center gap-1 mt-0.5">
               <Lock size={11} /> Зөвхөн салааныхан харна
             </p>
+            {leaders.length > 0 && (
+              <p className="text-[11px] text-white/90 font-bold flex items-center gap-1 mt-1">
+                <Star size={11} className="fill-white/90" /> Салааны дарга: {leaders.map((l) => l.fullName || l.name).join(", ")}
+              </p>
+            )}
           </div>
           <div className="px-4 py-3">
             <p className="text-[10px] font-black text-on-surface-muted uppercase tracking-widest mb-2 flex items-center gap-1">
@@ -275,6 +309,7 @@ export default function BranchPage() {
                     className="inline-flex items-center gap-1.5 pl-0.5 pr-2.5 py-0.5 rounded-full bg-surface border border-border-subtle text-xs">
                     <Avatar name={m.name} avatar={m.avatar} size={7} />
                     {m.fullName || m.name}
+                    {m.branchLeader && <Star size={10} className="text-sky-400 fill-sky-400" />}
                   </span>
                 ))}
               </div>
@@ -366,6 +401,32 @@ export default function BranchPage() {
                         <img src={url} alt="" loading="lazy" className="w-full object-cover max-h-80" />
                       </a>
                     ))}
+                  </div>
+                )}
+                {/* Шалгасан эсэх */}
+                {(post.checkedBy || canCheck) && (
+                  <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-t border-border-subtle">
+                    {post.checkedBy ? (
+                      <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
+                        <CheckCircle2 size={15} /> {post.checkedBy} шалгасан
+                        {post.checkedAt && (
+                          <span className="font-normal text-on-surface-muted text-[10px]">• {timeAgo(post.checkedAt)}</span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5 text-xs text-on-surface-muted">
+                        <Circle size={14} /> Шалгаагүй
+                      </span>
+                    )}
+                    {canCheck && (
+                      <button onClick={() => toggleCheck(post)} disabled={checking === post.id}
+                        className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 disabled:opacity-50
+                          ${post.checkedBy
+                            ? "bg-surface-alt border-border text-on-surface-muted hover:bg-card-hover"
+                            : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"}`}>
+                        {checking === post.id ? <Loader2 size={12} className="animate-spin" /> : post.checkedBy ? "Болиулах" : <><CheckCircle2 size={13} /> Шалгах</>}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

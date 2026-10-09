@@ -9,12 +9,14 @@ datasource db {
 model User {
   id          String       @id @default(nanoid())
   name        String       @unique
-  // Хэрэглэгчийн эрх: USER | ADMIN
+  // Хэрэглэгчийн эрх: USER | LEADER (ангийн дарга) | ADMIN
   role        String       @default("USER")
   // Бүртгэлийн төлөв: PENDING (админ зөвшөөрөөгүй) | APPROVED
   status      String       @default("APPROVED")
   // Ангийн салаа: 1 | 2 | 3 (сонгоогүй бол null)
   branch      Int?
+  // Салааны дарга: өөрийн салааныхны даалгаврыг шалгана
+  branchLeader Boolean     @default(false)
   pinHash     String       @unique
   pinSalt     String
   avatar      String?
@@ -215,6 +217,9 @@ model BranchPost {
   userName  String
   text      String
   images    String[] @default([])
+  // Салааны дарга шалгасан эсэх
+  checkedBy String?
+  checkedAt DateTime?
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userName], references: [name], onDelete: Cascade)
 

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ImagePlus, Send, Loader2, X, Heart, MessageSquare, Trash2 } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
 import AppHeader from "@/app/_components/AppHeader";
+import { useMyRoles } from "@/app/_components/useMyRoles";
 
 type Post = {
   id: string;
@@ -47,7 +48,8 @@ export default function FeedPage() {
   const [loadingComments, setLoadingComments] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [me, setMe] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
+  // Админ болон ангийн дарга бүх нийтлэлийг устгана
+  const { canManage: isAdmin } = useMyRoles();
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
@@ -62,7 +64,6 @@ export default function FeedPage() {
   useEffect(() => {
     const name = localStorage.getItem("name") ?? "";
     setMe(name.toLowerCase());
-    setIsAdmin(localStorage.getItem("role") === "ADMIN" || name.toLowerCase() === "admin");
     fetchPosts();
   }, []);
 
