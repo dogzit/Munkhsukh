@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "11A Angiin Web App",
   description: "Made by Zolo",
+  appleWebApp: { capable: true, title: "11A", statusBarStyle: "black" },
 };
 
 export const viewport: Viewport = {

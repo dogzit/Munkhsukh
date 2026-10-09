@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Instagram, Loader2, ImageOff, MessageSquare, Heart } from "lucide-react";
+import { ArrowLeft, Instagram, Loader2, ImageOff, MessageSquare, Heart, Phone, Mail } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
 import { HeaderActions } from "@/app/_components/AppHeader";
 
-type UserProfile = { name: string; avatar: string | null; bio: string | null; instagram: string | null };
+type UserProfile = { name: string; avatar: string | null; bio: string | null; instagram: string | null; phone: string | null; email: string | null };
 type Post = { id: string; userName: string; text: string; images: string[]; createdAt: string; likeCount: number; commentCount: number };
 
 function timeAgo(iso: string) {
@@ -144,6 +144,24 @@ export default function UserPage() {
               <Instagram size={13} />
               @{user.instagram}
             </a>
+          )}
+          {(user?.phone || user?.email) && (
+            <div className="flex flex-wrap justify-center gap-2 pt-1">
+              {user?.phone && (
+                <a href={`tel:${user.phone}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-all">
+                  <Phone size={13} />
+                  {user.phone}
+                </a>
+              )}
+              {user?.email && (
+                <a href={`mailto:${user.email}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-semibold hover:bg-sky-500/20 transition-all max-w-full">
+                  <Mail size={13} className="shrink-0" />
+                  <span className="truncate">{user.email}</span>
+                </a>
+              )}
+            </div>
           )}
         </div>
 

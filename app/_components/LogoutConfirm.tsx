@@ -35,6 +35,21 @@ export default function LogoutConfirm({ open, onClose }: Props) {
   const confirmLogout = async () => {
     setLoading(true);
     try {
+      // Гарсны дараа энэ төхөөрөмж рүү push ирэхгүй болгоно
+      const reg = await navigator.serviceWorker?.getRegistration("/sw.js");
+      const sub = await reg?.pushManager.getSubscription();
+      if (sub) {
+        await fetch("/api/push/subscribe", {
+          method: "DELETE",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        }).catch(() => {});
+        await sub.unsubscribe().catch(() => {});
+      }
+    } catch {
+      // тайван
+    }
+    try {
       await fetch("/api/auth/logout", { method: "POST" });
     } catch {
       // cookie авч чадвал ч редирект хийнэ

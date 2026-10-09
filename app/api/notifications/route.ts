@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { isAdminFromHeaders } from "@/lib/requireAuth";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
+import { pushToUser } from "@/lib/push";
 
 /**
  * GET /api/notifications
@@ -59,6 +60,14 @@ export async function POST(req: NextRequest) {
         href: href || null,
       },
     });
+
+    after(() =>
+      pushToUser(notification.userName, {
+        title: `${notification.icon ? notification.icon + " " : ""}${notification.title}`,
+        body: notification.body ?? undefined,
+        href: notification.href ?? "/",
+      }),
+    );
 
     return NextResponse.json(notification, { status: 201 });
   } catch (e) {

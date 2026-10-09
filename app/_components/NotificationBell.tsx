@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, Check, CheckCheck, X } from "lucide-react";
+import PushToggle from "./PushToggle";
 
 type Notification = {
   id: string;
@@ -150,6 +151,8 @@ export default function NotificationBell() {
                 </button>
               </div>
             </div>
+
+            <PushToggle />
 
             {/* Notifications list */}
             <div className="overflow-y-auto max-h-[55vh]">

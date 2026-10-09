@@ -46,7 +46,12 @@ const PUBLIC_API = [
   "/api/auth/forgot-pin",
   "/api/qr/",
 ];
-const PUBLIC_PAGES = ["/auth/login", "/auth/signup"];
+const PUBLIC_PAGES = [
+  "/auth/login",
+  "/auth/signup",
+  "/sw.js",
+  "/manifest.webmanifest",
+];
 const PUBLIC_PAGE_PREFIXES = ["/bus/ticket/"];
 
 export async function middleware(req: NextRequest) {

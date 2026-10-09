@@ -26,6 +26,7 @@ model User {
   likes       Like[]
   comments    Comment[]
   busBookings BusBooking[]
+  pushSubs    PushSubscription[]
 }
 
 model Todo {
@@ -199,6 +200,19 @@ model Notification {
 
   @@index([userName, read])
   @@index([createdAt])
+}
+
+// --- Web Push (утас руу мэдэгдэл) ---
+model PushSubscription {
+  id        String   @id @default(nanoid())
+  userName  String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userName], references: [name], onDelete: Cascade)
+
+  @@index([userName])
 }
 
 enum Day {

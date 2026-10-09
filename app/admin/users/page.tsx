@@ -9,6 +9,8 @@ import {
   ShieldCheck,
   User as UserIcon,
   Loader2,
+  Phone,
+  Mail,
 } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
 
@@ -18,6 +20,7 @@ type AdminUser = {
   fullName: string | null;
   avatar: string | null;
   email: string | null;
+  phone: string | null;
   createdAt: string;
   _count: { todos: number; busBookings: number };
 };
@@ -168,8 +171,37 @@ export default function AdminUsersPage() {
                     </div>
                     <p className="text-[10px] text-on-surface-muted truncate">
                       @{u.name}
-                      {u.email ? ` • ${u.email}` : ""}
                     </p>
+                    <div className="mt-1 flex flex-col gap-0.5 text-[11px]">
+                      {u.phone ? (
+                        <a
+                          href={`tel:${u.phone}`}
+                          className="flex items-center gap-1 text-on-surface hover:text-accent truncate"
+                        >
+                          <Phone size={11} className="shrink-0" />
+                          <span className="truncate">{u.phone}</span>
+                        </a>
+                      ) : (
+                        <span className="flex items-center gap-1 text-on-surface-muted/60">
+                          <Phone size={11} className="shrink-0" />
+                          Утас оруулаагүй
+                        </span>
+                      )}
+                      {u.email ? (
+                        <a
+                          href={`mailto:${u.email}`}
+                          className="flex items-center gap-1 text-on-surface hover:text-accent truncate"
+                        >
+                          <Mail size={11} className="shrink-0" />
+                          <span className="truncate">{u.email}</span>
+                        </a>
+                      ) : (
+                        <span className="flex items-center gap-1 text-on-surface-muted/60">
+                          <Mail size={11} className="shrink-0" />
+                          Имэйл оруулаагүй
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Role badge + toggle */}

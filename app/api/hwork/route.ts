@@ -1,7 +1,8 @@
 import prisma from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { isNonEmptyString } from "@/lib/validation";
 import { homeworkNotifyTemplate, notifyAllUsersByEmail } from "@/lib/notify";
+import { pushToAllUsers } from "@/lib/push";
 
 type ApiError = { error: string };
 
@@ -129,6 +130,13 @@ export async function POST(req: Request) {
       date: created.date,
     });
     void notifyAllUsersByEmail(tpl);
+    after(() =>
+      pushToAllUsers({
+        title: `📚 Шинэ даалгавар: ${created.subject}`,
+        body: `${created.title} (${created.date.toLocaleDateString("mn-MN")})`,
+        href: "/homeWork",
+      }),
+    );
 
     return NextResponse.json(created, { status: 201 });
   } catch (e) {

@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAdminFromHeaders } from "@/lib/requireAuth";
 import { busApprovedTemplate, notifyUserByEmail } from "@/lib/notify";
+import { pushToUser } from "@/lib/push";
 
 function getAppUrl(req: NextRequest): string {
   const explicit = process.env.APP_URL;
@@ -42,6 +43,13 @@ export async function POST(req: NextRequest) {
       const ticketUrl = `${appUrl}/bus/ticket/${encodeURIComponent(updated.qrToken)}`;
       const tpl = busApprovedTemplate({ seatId: updated.seatId, ticketUrl });
       void notifyUserByEmail(updated.userName, tpl);
+      after(() =>
+        pushToUser(updated.userName, {
+          title: "🚌 VIP хүсэлт батлагдлаа",
+          body: `Таны суудал: ${updated.seatId}. Тасалбараа нээх бол дарна уу.`,
+          href: `/bus/ticket/${encodeURIComponent(updated.qrToken)}`,
+        }),
+      );
 
       return NextResponse.json({
         success: true,

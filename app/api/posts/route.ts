@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { notifyAllUsersByEmail, postNotifyTemplate } from "@/lib/notify";
+import { pushToAllUsers } from "@/lib/push";
 
 export async function GET(req: NextRequest) {
   try {
@@ -55,6 +56,14 @@ export async function POST(req: NextRequest) {
     if (text) {
       const tpl = postNotifyTemplate({ userName, text });
       void notifyAllUsersByEmail({ ...tpl, exceptUserName: userName });
+      after(() =>
+        pushToAllUsers({
+          title: `📰 ${userName} шинэ мэдээ нийтэллээ`,
+          body: text.length > 120 ? text.slice(0, 120) + "…" : text,
+          href: "/feed",
+          exceptUserName: userName,
+        }),
+      );
     }
 
     return NextResponse.json(post, { status: 201 });
