@@ -15,6 +15,7 @@ import {
   Lock,
   KeyRound,
   X,
+  AtSign,
 } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
 import AppHeader from "@/app/_components/AppHeader";
@@ -126,6 +127,9 @@ export default function ProfilePage() {
   const [forgotPinConfirm, setForgotPinConfirm] = useState("");
   const [forgotPinLoading, setForgotPinLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [newName, setNewName] = useState("");
+  const [renamePin, setRenamePin] = useState("");
+  const [renaming, setRenaming] = useState(false);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -229,6 +233,34 @@ export default function ProfilePage() {
       toast.error("Алдаа");
     }
     setSaving(false);
+  };
+
+  /** Хэрэглэгчийн нэр (нэвтрэх нэр) солих */
+  const renameUser = async () => {
+    const n = newName.trim();
+    if (!n || !renamePin) {
+      toast.error("Шинэ нэр болон PIN-ээ оруулна уу");
+      return;
+    }
+    setRenaming(true);
+    try {
+      const res = await fetch("/api/profile/rename", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ newName: n, pin: renamePin }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error);
+      localStorage.setItem("name", data.name.toLowerCase());
+      toast.success(`Нэр солигдлоо! Одоо @${data.name} нэрээр нэвтэрнэ`);
+      setNewName("");
+      setRenamePin("");
+      // Бүх хуудсыг шинэ нэрээр ачаална
+      setTimeout(() => window.location.reload(), 800);
+    } catch (e) {
+      toast.error((e as Error).message || "Алдаа гарлаа");
+    }
+    setRenaming(false);
   };
 
   /** PIN солих */
@@ -507,6 +539,50 @@ export default function ProfilePage() {
             )}
           </div>
         )}
+
+        {/* ── Хэрэглэгчийн нэр солих ── */}
+        <div className="bg-surface-elevated border border-border rounded-2xl p-4 sm:p-5 space-y-3">
+          <div>
+            <h3 className="text-[10px] font-black text-on-surface-muted uppercase tracking-widest">
+              Хэрэглэгчийн нэр
+            </h3>
+            <p className="text-xs text-on-surface-muted mt-1">
+              Одоогийн нэр: <span className="font-bold text-on-surface">@{profile.name}</span>. Солибол
+              дараа нь шинэ нэрээрээ нэвтэрнэ.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px_auto] gap-2">
+            <div className="flex items-center gap-1.5 bg-surface border border-border rounded-xl px-3 focus-within:ring-2 focus-within:ring-accent/30">
+              <AtSign size={14} className="text-on-surface-muted shrink-0" />
+              <input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value.replace(/\s/g, ""))}
+                maxLength={30}
+                placeholder="Шинэ нэр"
+                autoCapitalize="none"
+                className="flex-1 min-w-0 bg-transparent py-2.5 text-sm text-on-surface placeholder:text-on-surface-muted/50 outline-none"
+              />
+            </div>
+            <input
+              value={renamePin}
+              onChange={(e) => setRenamePin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              type="password"
+              inputMode="numeric"
+              placeholder="PIN"
+              className="bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-on-surface placeholder:text-on-surface-muted/50 outline-none focus:ring-2 focus:ring-accent/30"
+            />
+            <button
+              onClick={renameUser}
+              disabled={renaming || !newName.trim() || !renamePin}
+              className="px-4 py-2.5 rounded-xl bg-accent/20 border border-accent/30 text-accent text-xs font-bold hover:bg-accent/30 disabled:opacity-40 transition-all flex items-center justify-center gap-1.5"
+            >
+              {renaming ? <Loader2 size={12} className="animate-spin" /> : null} Солих
+            </button>
+          </div>
+          <p className="text-[10px] text-on-surface-muted/70">
+            2-30 тэмдэгт: үсэг, тоо, цэг, доогуур зураас (_), зураас (-). Хоосон зай орохгүй.
+          </p>
+        </div>
 
         {/* ── Хувийн мэдээлэл ── */}
         <div className="bg-surface-elevated border border-border rounded-2xl p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
