@@ -15,6 +15,7 @@ import {
   User,
   Settings,
   Trophy,
+  Users,
   LogOut,
   PanelLeftClose,
   PanelLeft,
@@ -28,6 +29,7 @@ const navItems = [
   { icon: <MessageCircle size={20} />, label: "Чат", href: "/chat" },
   { icon: <Search size={20} />, label: "Хайлт", href: "/search" },
   { icon: <Newspaper size={20} />, label: "Мэдээ", href: "/feed" },
+  { icon: <Users size={20} />, label: "Салаа", href: "/branch" },
   { icon: <Shuffle size={20} />, label: "Сурагч сонгох", href: "/random" },
   { icon: <Trophy size={20} />, label: "Тэргүүлэгчид", href: "/leaderboard" },
 ];

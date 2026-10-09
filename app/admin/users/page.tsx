@@ -17,6 +17,7 @@ import {
   Cake,
 } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
+import { BRANCHES } from "@/lib/branches";
 
 type AdminUser = {
   name: string;
@@ -27,6 +28,7 @@ type AdminUser = {
   phone: string | null;
   birthDate: string | null;
   status: string;
+  branch: number | null;
   createdAt: string;
   _count: { todos: number; busBookings: number };
 };
@@ -118,6 +120,25 @@ export default function AdminUsersPage() {
       toast.error("Алдаа гарлаа");
     } finally {
       setDeciding(null);
+    }
+  };
+
+  const setBranch = async (u: AdminUser, branch: number | null) => {
+    const prevBranch = u.branch;
+    setUsers((prev) => prev.map((x) => (x.name === u.name ? { ...x, branch } : x)));
+    try {
+      const res = await fetch("/api/branch", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: u.name, branch }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(
+        branch ? `${u.fullName || u.name} → ${branch}-р салаа` : `${u.fullName || u.name} салаагүй боллоо`,
+      );
+    } catch {
+      setUsers((prev) => prev.map((x) => (x.name === u.name ? { ...x, branch: prevBranch } : x)));
+      toast.error("Салаа солиход алдаа гарлаа");
     }
   };
 
@@ -265,8 +286,19 @@ export default function AdminUsersPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-[10px] text-on-surface-muted truncate">
+                    <p className="text-[10px] text-on-surface-muted truncate flex items-center gap-1.5">
                       @{u.name}
+                      <select
+                        value={u.branch ?? ""}
+                        onChange={(e) => setBranch(u, e.target.value ? Number(e.target.value) : null)}
+                        aria-label="Салаа"
+                        className="bg-surface-alt border border-border rounded-md px-1 py-0.5 text-[10px] text-on-surface outline-none"
+                      >
+                        <option value="">Салаагүй</option>
+                        {BRANCHES.map((b) => (
+                          <option key={b.id} value={b.id}>{b.name}</option>
+                        ))}
+                      </select>
                     </p>
                     <div className="mt-1 flex flex-col gap-0.5 text-[11px]">
                       {u.phone ? (

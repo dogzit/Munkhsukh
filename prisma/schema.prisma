@@ -13,6 +13,8 @@ model User {
   role        String       @default("USER")
   // Бүртгэлийн төлөв: PENDING (админ зөвшөөрөөгүй) | APPROVED
   status      String       @default("APPROVED")
+  // Ангийн салаа: 1 | 2 | 3 (сонгоогүй бол null)
+  branch      Int?
   pinHash     String       @unique
   pinSalt     String
   avatar      String?
@@ -29,6 +31,7 @@ model User {
   comments    Comment[]
   busBookings BusBooking[]
   pushSubs    PushSubscription[]
+  branchPosts BranchPost[]
 }
 
 model Todo {
@@ -203,6 +206,19 @@ model Notification {
 
   @@index([userName, read])
   @@index([createdAt])
+}
+
+// --- Салааны хэсэг: зөвхөн тухайн салааныхан харна ---
+model BranchPost {
+  id        String   @id @default(nanoid())
+  branch    Int
+  userName  String
+  text      String
+  images    String[] @default([])
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userName], references: [name], onDelete: Cascade)
+
+  @@index([branch, createdAt])
 }
 
 // --- Web Push (утас руу мэдэгдэл) ---

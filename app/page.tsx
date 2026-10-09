@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { BookOpen, Clock, ArrowRight, MessageCircle, Newspaper } from "lucide-react";
+import { BookOpen, Clock, ArrowRight, MessageCircle, Newspaper, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import BusSeatPanel from "./_components/BusSeatPanel";
 import AppHeader from "./_components/AppHeader";
@@ -132,6 +132,23 @@ export default function HomePage() {
             <div className="flex-1 min-w-0">
               <p className="font-black text-sm">Хуваарь</p>
               <p className="text-[10px] text-on-surface-muted">Өнөөдрийн цаг</p>
+            </div>
+            <ArrowRight size={14} className="text-on-surface-muted/40 group-hover:text-on-surface-muted transition-colors" />
+          </button>
+
+          <button
+            onClick={() => router.push("/branch")}
+            className="col-span-2 group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl
+              p-4 text-left flex items-center gap-3
+              hover:border-violet-500/30 hover:bg-violet-500/[0.04]
+              active:scale-[0.97] transition-all duration-300"
+          >
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/20">
+              <Users size={20} className="text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-black text-sm">Миний салаа</p>
+              <p className="text-[10px] text-on-surface-muted">Салааныхантайгаа даалгавраа хуваалцах</p>
             </div>
             <ArrowRight size={14} className="text-on-surface-muted/40 group-hover:text-on-surface-muted transition-colors" />
           </button>
