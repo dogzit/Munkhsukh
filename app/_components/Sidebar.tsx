@@ -18,6 +18,7 @@ import {
   Trophy,
   Users,
   Crown,
+  GraduationCap,
   LogOut,
   PanelLeftClose,
   PanelLeft,
@@ -32,6 +33,7 @@ const navItems = [
   { icon: <Search size={20} />, label: "Хайлт", href: "/search" },
   { icon: <Newspaper size={20} />, label: "Мэдээ", href: "/feed" },
   { icon: <Users size={20} />, label: "Салаа", href: "/branch" },
+  { icon: <GraduationCap size={20} />, label: "Сурагчид", href: "/students" },
   { icon: <Shuffle size={20} />, label: "Сурагч сонгох", href: "/random" },
   { icon: <Trophy size={20} />, label: "Тэргүүлэгчид", href: "/leaderboard" },
 ];
