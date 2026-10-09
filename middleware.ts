@@ -51,6 +51,8 @@ const PUBLIC_PAGES = [
   "/auth/signup",
   "/sw.js",
   "/manifest.webmanifest",
+  "/robots.txt",
+  "/sitemap.xml",
 ];
 const PUBLIC_PAGE_PREFIXES = ["/bus/ticket/"];
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ImagePlus, Send, Loader2, X, Heart, MessageSquare } from "lucide-react";
+import { ImagePlus, Send, Loader2, X, Heart, MessageSquare, Trash2 } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
 import AppHeader from "@/app/_components/AppHeader";
 
@@ -46,6 +46,10 @@ export default function FeedPage() {
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [me, setMe] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const fetchPosts = async () => {
     try {
@@ -55,7 +59,25 @@ export default function FeedPage() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchPosts(); }, []);
+  useEffect(() => {
+    const name = localStorage.getItem("name") ?? "";
+    setMe(name.toLowerCase());
+    setIsAdmin(localStorage.getItem("role") === "ADMIN" || name.toLowerCase() === "admin");
+    fetchPosts();
+  }, []);
+
+  const deletePost = async (postId: string) => {
+    setDeleting(postId);
+    try {
+      const res = await fetch(`/api/posts/${postId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
+      if (openComments === postId) setOpenComments(null);
+      toast.success("Нийтлэл устгагдлаа");
+    } catch { toast.error("Устгахад алдаа гарлаа"); }
+    setDeleting(null);
+    setConfirmDelete(null);
+  };
 
   const addFiles = (picked: File[]) => {
     const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -214,10 +236,30 @@ export default function FeedPage() {
                 <div className="w-9 h-9 rounded-full bg-accent/20 flex items-center justify-center text-accent text-xs font-bold">
                   {post.userName[0]?.toUpperCase()}
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold">{post.userName}</p>
                   <p className="text-[10px] text-on-surface-muted">{timeAgo(post.createdAt)}</p>
                 </div>
+                {(post.userName.toLowerCase() === me || isAdmin) && (
+                  confirmDelete === post.id ? (
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-[10px] text-on-surface-muted">Устгах уу?</span>
+                      <button onClick={() => deletePost(post.id)} disabled={deleting === post.id}
+                        className="px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-[10px] font-bold hover:bg-red-500/20 disabled:opacity-50 transition-all">
+                        {deleting === post.id ? <Loader2 size={11} className="animate-spin" /> : "Тийм"}
+                      </button>
+                      <button onClick={() => setConfirmDelete(null)} disabled={deleting === post.id}
+                        className="px-2.5 py-1 rounded-lg border border-border text-on-surface-muted text-[10px] font-bold hover:bg-card-hover transition-all">
+                        Үгүй
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setConfirmDelete(post.id)} aria-label="Нийтлэл устгах"
+                      className="p-2 rounded-xl text-on-surface-muted hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0">
+                      <Trash2 size={15} />
+                    </button>
+                  )
+                )}
               </div>
 
               {/* Content */}

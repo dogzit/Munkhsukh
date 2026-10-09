@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 // iPhone дээр "Add to Home Screen" хийж push мэдэгдэл авахад шаардлагатай
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "11A Angiin Web App",
+    name: "11AANGIIHAN",
     short_name: "11A",
     start_url: "/",
     display: "standalone",

@@ -24,13 +24,32 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     } else {
       // Хэрэв нэвтэрчихсэн байхад login эсвэл signup руу орох гэж үзвэл:
       if (isPublicPath) {
-        const target =
-          localStorage.getItem("role") === "ADMIN" ||
-            storedName.toLowerCase() === "admin"
-            ? "/admin"
-            : "/";
-        router.replace(target);
-        return;
+        // localStorage-д нэр үлдсэн ч cookie хүчингүй болсон байж болно.
+        // Шалгахгүйгээр "/" руу явуулбал middleware буцаагаад login руу
+        // явуулж, хар дэлгэц дээр эцэс төгсгөлгүй эргэлдэнэ.
+        let cancelled = false;
+        fetch("/api/profile")
+          .then((res) => {
+            if (cancelled) return;
+            if (res.ok) {
+              const target =
+                localStorage.getItem("role") === "ADMIN" ||
+                  storedName.toLowerCase() === "admin"
+                  ? "/admin"
+                  : "/";
+              router.replace(target);
+            } else {
+              localStorage.removeItem("name");
+              localStorage.removeItem("role");
+              setChecking(false);
+            }
+          })
+          .catch(() => {
+            if (!cancelled) setChecking(false);
+          });
+        return () => {
+          cancelled = true;
+        };
       }
     }
 
