@@ -11,6 +11,8 @@ model User {
   name        String       @unique
   // Хэрэглэгчийн эрх: USER | ADMIN
   role        String       @default("USER")
+  // Бүртгэлийн төлөв: PENDING (админ зөвшөөрөөгүй) | APPROVED
+  status      String       @default("APPROVED")
   pinHash     String       @unique
   pinSalt     String
   avatar      String?

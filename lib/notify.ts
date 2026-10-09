@@ -16,6 +16,7 @@ export async function notifyAllUsersByEmail(args: {
     const users = await prisma.user.findMany({
       where: {
         email: { not: null },
+        status: "APPROVED",
         ...(args.exceptUserName
           ? { NOT: { name: args.exceptUserName } }
           : {}),

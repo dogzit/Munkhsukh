@@ -24,6 +24,8 @@ export async function GET(req: NextRequest) {
         avatar: true,
         email: true,
         phone: true,
+        birthDate: true,
+        status: true,
         createdAt: true,
         _count: { select: { todos: true, busBookings: true } },
       },

@@ -11,6 +11,10 @@ import {
   Loader2,
   Phone,
   Mail,
+  Check,
+  X,
+  UserPlus,
+  Cake,
 } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
 
@@ -21,6 +25,8 @@ type AdminUser = {
   avatar: string | null;
   email: string | null;
   phone: string | null;
+  birthDate: string | null;
+  status: string;
   createdAt: string;
   _count: { todos: number; busBookings: number };
 };
@@ -31,6 +37,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [me, setMe] = useState("");
   const [toggling, setToggling] = useState<string | null>(null);
+  const [deciding, setDeciding] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -82,7 +89,41 @@ export default function AdminUsersPage() {
     }
   };
 
-  const adminCount = users.filter((u) => u.role === "ADMIN").length;
+  const decide = async (u: AdminUser, action: "approve" | "decline") => {
+    if (deciding) return;
+    if (
+      action === "decline" &&
+      !window.confirm(`${u.fullName || u.name}-ийн хүсэлтийг татгалзах уу? Бүртгэл нь устна.`)
+    ) {
+      return;
+    }
+    setDeciding(u.name);
+    try {
+      const res = await fetch("/api/admin/users/approval", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: u.name, action }),
+      });
+      if (!res.ok) throw new Error();
+      if (action === "approve") {
+        setUsers((prev) =>
+          prev.map((x) => (x.name === u.name ? { ...x, status: "APPROVED" } : x)),
+        );
+        toast.success(`${u.fullName || u.name} зөвшөөрөгдлөө ✅`);
+      } else {
+        setUsers((prev) => prev.filter((x) => x.name !== u.name));
+        toast.success(`${u.fullName || u.name}-ийн хүсэлт татгалзагдлаа`);
+      }
+    } catch {
+      toast.error("Алдаа гарлаа");
+    } finally {
+      setDeciding(null);
+    }
+  };
+
+  const pending = users.filter((u) => u.status === "PENDING");
+  const approved = users.filter((u) => u.status !== "PENDING");
+  const adminCount = approved.filter((u) => u.role === "ADMIN").length;
 
   return (
     <div className="min-h-screen bg-surface text-on-surface font-sans">
@@ -101,7 +142,9 @@ export default function AdminUsersPage() {
         <div className="min-w-0">
           <h1 className="font-bold text-sm">Хэрэглэгчийн эрх</h1>
           <p className="text-[10px] text-on-surface-muted">
-            {loading ? "Ачааллаж байна..." : `${users.length} хэрэглэгч • ${adminCount} админ`}
+            {loading
+              ? "Ачааллаж байна..."
+              : `${approved.length} хэрэглэгч • ${adminCount} админ${pending.length ? ` • ${pending.length} хүсэлт` : ""}`}
           </p>
         </div>
       </div>
@@ -123,14 +166,67 @@ export default function AdminUsersPage() {
               </div>
             ))}
           </div>
-        ) : users.length === 0 ? (
+        ) : (
+          <>
+          {pending.length > 0 && (
+            <div className="mb-6">
+              <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <UserPlus size={12} /> Бүртгэлийн хүсэлт ({pending.length})
+              </p>
+              <div className="space-y-2">
+                {pending.map((u) => {
+                  const busy = deciding === u.name;
+                  return (
+                    <div key={u.name}
+                      className="p-4 rounded-2xl border bg-amber-500/5 border-amber-500/30 space-y-3">
+                      <div>
+                        <p className="font-bold text-sm">{u.fullName || u.name}</p>
+                        <p className="text-[10px] text-on-surface-muted">
+                          @{u.name} • {new Date(u.createdAt).toLocaleString("mn-MN")}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-1 text-xs">
+                        <span className="flex items-center gap-1.5 truncate">
+                          <Mail size={12} className="shrink-0 text-on-surface-muted" />
+                          {u.email || <span className="text-on-surface-muted/60">Имэйл байхгүй</span>}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <Phone size={12} className="shrink-0 text-on-surface-muted" />
+                          {u.phone || <span className="text-on-surface-muted/60">Утас оруулаагүй</span>}
+                        </span>
+                        {u.birthDate && (
+                          <span className="flex items-center gap-1.5">
+                            <Cake size={12} className="shrink-0 text-on-surface-muted" />
+                            {new Date(u.birthDate).toLocaleDateString("mn-MN")}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => decide(u, "approve")} disabled={busy}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border
+                            bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 active:scale-95 disabled:opacity-50 transition-all">
+                          {busy ? <Loader2 size={12} className="animate-spin" /> : <Check size={13} />} Зөвшөөрөх
+                        </button>
+                        <button onClick={() => decide(u, "decline")} disabled={busy}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border
+                            bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20 active:scale-95 disabled:opacity-50 transition-all">
+                          <X size={13} /> Татгалзах
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {approved.length === 0 ? (
           <div className="text-center py-20 bg-surface-elevated border border-border rounded-3xl">
             <div className="text-5xl mb-4 opacity-30">👥</div>
             <p className="text-gray-500">Хэрэглэгч олдсонгүй</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {users.map((u) => {
+            {approved.map((u) => {
               const isAdmin = u.role === "ADMIN";
               const isMe = u.name.toLowerCase() === me;
               const busy = toggling === u.name;
@@ -241,6 +337,8 @@ export default function AdminUsersPage() {
               );
             })}
           </div>
+          )}
+          </>
         )}
 
         {/* Info */}

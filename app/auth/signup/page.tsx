@@ -167,14 +167,11 @@ export default function SignupPage() {
         toast.error(data.error || "Бүртгэл амжилтгүй");
         return;
       }
-      localStorage.setItem("name", data.name.toLowerCase());
-      localStorage.setItem("role", data.role ?? "USER");
-      toast.success(`Тавтай морил, ${data.name}! ✨`);
-      router.push(
-        (data.role ?? "USER") === "ADMIN" || data.name.toLowerCase() === "admin"
-          ? "/admin"
-          : "/",
-      );
+      // Админ зөвшөөрөх хүртэл нэвтрэхгүй
+      toast.success("Бүртгэл үүслээ! Админ зөвшөөрмөгц имэйлээр мэдэгдэнэ ✨", {
+        duration: 8000,
+      });
+      router.push("/auth/login");
     } catch {
       toast.error("Сервертэй холбогдож чадсангүй");
     } finally {

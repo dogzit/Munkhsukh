@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     const users = await prisma.user.findMany({
-      where: { name: { not: "admin" } },
+      where: { name: { not: "admin" }, status: "APPROVED" },
       select: { name: true },
     });
 

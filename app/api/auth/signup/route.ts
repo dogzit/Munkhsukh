@@ -1,13 +1,12 @@
 import prisma from "@/lib/prisma";
 import {
-  createAuthToken,
   hashPin,
   isValidPin,
   makePinSalt,
   normalizePin,
-  setAuthTokenCookie,
 } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import { notifyAdminsOfSignup } from "@/lib/signupApproval";
+import { NextResponse, after } from "next/server";
 
 type ApiError = { error: string };
 
@@ -109,20 +108,17 @@ export async function POST(req: Request) {
         email,
         phone: isNonEmptyString(phone) ? phone.trim().slice(0, 20) : null,
         birthDate,
+        // Шинэ хэрэглэгч админ зөвшөөрөх хүртэл нэвтэрч чадахгүй
+        status: "PENDING",
       },
     });
 
-    const token = await createAuthToken({
-      id: user.id,
-      name: user.name,
-      role: user.role,
-    });
-    const res = NextResponse.json(
-      { ok: true, name: user.name, role: user.role },
+    after(() => notifyAdminsOfSignup(user));
+
+    return NextResponse.json(
+      { ok: true, pending: true, name: user.name },
       { status: 201 },
     );
-    setAuthTokenCookie(res, token);
-    return res;
   } catch (e) {
     const code = (e as { code?: string } | undefined)?.code;
     if (code === "P2002") {

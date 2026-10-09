@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
 
     // Fetch all users and filter in JS (small dataset for a classroom app)
     const allUsers = await prisma.user.findMany({
-      where: { name: { not: "admin" } },
+      where: { name: { not: "admin" }, status: "APPROVED" },
       select: { name: true, avatar: true, bio: true, instagram: true, phone: true, email: true },
     });
 

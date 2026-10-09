@@ -63,6 +63,16 @@ export async function POST(req: Request) {
       );
     }
 
+    if (user.status === "PENDING") {
+      return NextResponse.json(
+        {
+          error: "Таны бүртгэлийг админ хараахан зөвшөөрөөгүй байна. Зөвшөөрөгдөхөөр имэйлээр мэдэгдэнэ.",
+          pending: true,
+        },
+        { status: 403 },
+      );
+    }
+
     const token = await createAuthToken({
       id: user.id,
       name: user.name,

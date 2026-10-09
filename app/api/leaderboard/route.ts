@@ -6,7 +6,7 @@ export async function GET() {
     // Хэрэглэгчид + нийт даалгавар + хэрэглэгч бүрийн хийсэн даалгаврын тоо
     const [users, totalHworks, checks] = await Promise.all([
       prisma.user.findMany({
-        where: { name: { not: "admin" } },
+        where: { name: { not: "admin" }, status: "APPROVED" },
         select: { name: true },
       }),
       prisma.hwork.count(),
