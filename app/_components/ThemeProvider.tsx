@@ -25,6 +25,8 @@ export const THEMES = [
   { id: "newjeans", label: "NewJeans", icon: "👖", group: "K-Pop" },
   { id: "straykids", label: "Stray Kids", icon: "🐺", group: "K-Pop" },
   { id: "stayc", label: "StayC", icon: "🦋", group: "K-Pop" },
+  // Цуврал
+  { id: "rickmorty", label: "Rick & Morty", icon: "🧪", group: "Цуврал" },
   // Aesthetic
   { id: "ocean", label: "Ocean", icon: "🌊", group: "Aesthetic" },
   { id: "sunset", label: "Sunset", icon: "🌅", group: "Aesthetic" },
