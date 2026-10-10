@@ -13,6 +13,7 @@ type Message = {
   text: string;
   image: string | null;
   replyToId: string | null;
+  replyTo?: { id: string; userName: string; text: string; image: boolean } | null;
   reaction: string[];
   createdAt: string;
 };
@@ -63,6 +64,10 @@ export default function ChatPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // Баруун тийш шудрахад хариулна (утсан дээр)
+  const touchRef = useRef<{ id: string; x: number; y: number } | null>(null);
+  const [swipe, setSwipe] = useState<{ id: string; dx: number } | null>(null);
+  const [highlight, setHighlight] = useState<string | null>(null);
 
   const fetchMessages = async () => {
     try {
@@ -157,12 +162,52 @@ export default function ChatPage() {
     } catch { /* */ }
   };
 
-  const getReplyText = (id: string | null) => {
-    if (!id) return null;
-    const msg = messages.find((m) => m.id === id);
-    if (!msg) return null;
-    if (!msg.text && msg.image) return `${msg.userName}: 📷 Зураг`;
-    return `${msg.userName}: ${msg.text.slice(0, 40)}${msg.text.length > 40 ? "..." : ""}`;
+  const startReply = (msg: Message) => {
+    setReplyTo(msg);
+    setSelectedMsg(null);
+    setReactMenu(null);
+    inputRef.current?.focus();
+  };
+
+  // Ишлэл дээр дарахад анхны мессеж рүү гүйлгэнэ
+  const jumpTo = (id: string) => {
+    const el = document.getElementById(`msg-${id}`);
+    if (!el) {
+      toast("Энэ мессеж хэт хуучин байна");
+      return;
+    }
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setHighlight(id);
+    setTimeout(() => setHighlight((h) => (h === id ? null : h)), 1500);
+  };
+
+  const onTouchStart = (msg: Message, e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchRef.current = { id: msg.id, x: t.clientX, y: t.clientY };
+  };
+
+  const onTouchMove = (msg: Message, e: React.TouchEvent) => {
+    const start = touchRef.current;
+    if (!start || start.id !== msg.id) return;
+    const t = e.touches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    // Босоо гүйлгэлт бол шудралт биш
+    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) {
+      touchRef.current = null;
+      setSwipe(null);
+      return;
+    }
+    if (dx > 0) setSwipe({ id: msg.id, dx: Math.min(dx, 80) });
+  };
+
+  const onTouchEnd = (msg: Message) => {
+    if (swipe?.id === msg.id && swipe.dx >= 60) {
+      navigator.vibrate?.(15);
+      startReply(msg);
+    }
+    touchRef.current = null;
+    setSwipe(null);
   };
 
   return (
@@ -195,20 +240,50 @@ export default function ChatPage() {
           messages.map((msg) => {
             const isMe = msg.userName === userName;
             const reactions = parseReactions(msg.reaction || []);
-            const replyText = getReplyText(msg.replyToId);
+            const quoted = msg.replyTo;
+            const dx = swipe?.id === msg.id ? swipe.dx : 0;
+            const selected = selectedMsg === msg.id;
 
             return (
-              <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"} group`}>
-                <div className={`max-w-[80%] ${isMe ? "items-end" : "items-start"}`}>
+              <div key={msg.id} id={`msg-${msg.id}`}
+                onTouchStart={(e) => onTouchStart(msg, e)}
+                onTouchMove={(e) => onTouchMove(msg, e)}
+                onTouchEnd={() => onTouchEnd(msg)}
+                className={`relative flex ${isMe ? "justify-end" : "justify-start"} group rounded-2xl transition-colors duration-500
+                  ${highlight === msg.id ? "bg-accent/10" : ""}`}>
+                {/* Шудрах үед гарч ирэх хариулах тэмдэг */}
+                {dx > 0 && (
+                  <span className="absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-accent/15 flex items-center justify-center"
+                    style={{ opacity: Math.min(dx / 60, 1), transform: `translateY(-50%) scale(${dx >= 60 ? 1.1 : 0.8})` }}>
+                    <Reply size={14} className="text-accent" />
+                  </span>
+                )}
+                <div className={`max-w-[80%] flex flex-col ${isMe ? "items-end" : "items-start"}`}
+                  style={dx ? { transform: `translateX(${dx}px)` } : { transition: "transform 0.2s" }}>
                   {!isMe && (
                     <p className={`text-[10px] font-bold mb-0.5 ml-2 ${nameColor(msg.userName)}`}>{msg.userName}</p>
                   )}
 
-                  {/* Reply preview */}
-                  {replyText && (
-                    <div className="text-[10px] text-on-surface-muted bg-accent/5 border-l-2 border-accent px-2 py-1.5 mx-2 mb-1 rounded-r-lg">
-                      <span className="font-bold text-accent">↩</span> {replyText}
-                    </div>
+                  {/* Хариулсан мессежийн ишлэл */}
+                  {msg.replyToId && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); if (quoted) jumpTo(quoted.id); }}
+                      className="max-w-full text-left text-[11px] text-on-surface-muted bg-accent/5 border-l-2 border-accent
+                        px-2.5 py-1.5 mx-2 mb-1 rounded-r-lg hover:bg-accent/10 transition-colors"
+                    >
+                      {quoted ? (
+                        <>
+                          <span className={`block font-bold text-[10px] ${nameColor(quoted.userName)}`}>
+                            ↩ {quoted.userName === userName ? "Танд" : quoted.userName}
+                          </span>
+                          <span className="block truncate">
+                            {quoted.text || (quoted.image ? "📷 Зураг" : "")}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="italic">↩ Устгагдсан мессеж</span>
+                      )}
+                    </button>
                   )}
 
                   <div className="relative">
@@ -226,13 +301,14 @@ export default function ChatPage() {
                       {msg.text && <p className={msg.image ? "px-3 pt-1.5 pb-1" : ""}>{msg.text}</p>}
                     </div>
 
-                    {/* Actions — shown on hover (desktop) or tap (mobile) */}
-                    <div className={`absolute top-0 ${isMe ? "-left-20" : "-right-20"} transition-opacity flex gap-0.5
-                      ${selectedMsg === msg.id ? "opacity-100" : "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"}
-                    `}>
-                      <button onClick={(e) => { e.stopPropagation(); setReplyTo(msg); inputRef.current?.focus(); }}
-                        className="p-1.5 hover:bg-card-hover rounded-lg transition-all" title="Хариулах">
-                        <Reply size={12} className="text-on-surface-muted" />
+                    {/* Компьютер дээр хулганаа аваачихад гарна */}
+                    <div className={`hidden lg:flex absolute top-1/2 -translate-y-1/2 ${isMe ? "right-full mr-1.5" : "left-full ml-1.5"}
+                      items-center gap-0.5 whitespace-nowrap transition-opacity
+                      opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto`}>
+                      <button onClick={(e) => { e.stopPropagation(); startReply(msg); }}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-surface-elevated border border-border
+                          text-[11px] font-bold hover:bg-card-hover hover:border-accent/30 transition-all">
+                        <Reply size={12} className="text-accent" /> Хариулах
                       </button>
                       <button onClick={(e) => { e.stopPropagation(); setReactMenu(reactMenu === msg.id ? null : msg.id); }}
                         className="p-1.5 hover:bg-card-hover rounded-lg transition-all" title="React">
@@ -259,6 +335,26 @@ export default function ChatPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Утсан дээр мессеж дээр дарахад доор нь гарна */}
+                  {selected && (
+                    <div className="lg:hidden flex gap-1 mt-1 mx-1" onClick={(e) => e.stopPropagation()}>
+                      <button onClick={() => startReply(msg)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-surface-elevated border border-border text-[11px] font-bold active:scale-95">
+                        <Reply size={12} className="text-accent" /> Хариулах
+                      </button>
+                      <button onClick={() => setReactMenu(reactMenu === msg.id ? null : msg.id)}
+                        className="px-2.5 py-1.5 rounded-xl bg-surface-elevated border border-border text-[11px] active:scale-95">
+                        😊
+                      </button>
+                      {(isMe || isAdmin) && (
+                        <button onClick={() => { setSelectedMsg(null); deleteMsg(msg.id); }}
+                          className="px-2.5 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 active:scale-95" aria-label="Устгах">
+                          <Trash2 size={12} className="text-red-400" />
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                   {/* Reactions display */}
                   {Object.keys(reactions).length > 0 && (
@@ -295,7 +391,8 @@ export default function ChatPage() {
         <div className="px-4 py-2 bg-surface-elevated border-t border-border flex items-center gap-2">
           <Reply size={14} className="text-accent shrink-0" />
           <p className="text-xs text-on-surface-muted truncate flex-1">
-            <span className="font-bold text-on-surface">{replyTo.userName}</span>: {replyTo.text ? replyTo.text.slice(0, 60) : "📷 Зураг"}
+            <span className="font-bold text-on-surface">{replyTo.userName}</span>:{" "}
+            {replyTo.text ? replyTo.text.slice(0, 60) : "📷 Зураг"}
           </p>
           <button onClick={() => setReplyTo(null)} className="p-1 hover:bg-card-hover rounded-lg"><X size={14} /></button>
         </div>
