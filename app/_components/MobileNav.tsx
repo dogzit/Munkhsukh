@@ -20,6 +20,7 @@ import {
   Shuffle,
   Crown,
   Shield,
+  BarChart3,
 } from "lucide-react";
 import { useMyRoles } from "./useMyRoles";
 
@@ -36,6 +37,7 @@ const navItems: NavItem[] = [
 // "Бусад" цэсэнд
 const moreItems: (NavItem & { color: string })[] = [
   { icon: Newspaper, label: "Мэдээ", href: "/feed", color: "from-orange-500 to-amber-500" },
+  { icon: BarChart3, label: "Санал асуулга", href: "/poll", color: "from-indigo-500 to-blue-500" },
   { icon: Users, label: "Салаа", href: "/branch", color: "from-violet-500 to-fuchsia-500" },
   { icon: GraduationCap, label: "Сурагчид", href: "/students", color: "from-amber-500 to-orange-500" },
   { icon: Search, label: "Хайлт", href: "/search", color: "from-sky-500 to-blue-500" },

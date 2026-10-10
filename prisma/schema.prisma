@@ -34,6 +34,7 @@ model User {
   busBookings BusBooking[]
   pushSubs    PushSubscription[]
   branchPosts BranchPost[]
+  pollVotes   PollVote[]
 }
 
 model Todo {
@@ -245,4 +246,30 @@ enum Day {
   WEDNESDAY
   THURSDAY
   FRIDAY
+}
+
+// --- Санал асуулга (зөвхөн админ үүсгэнэ) ---
+model Poll {
+  id        String     @id @default(nanoid())
+  question  String
+  options   String[]
+  createdBy String
+  createdAt DateTime   @default(now())
+  // Дуусах хугацаа — админ эрт зогсооход одоогийн цагаар солигдоно
+  endsAt    DateTime
+  votes     PollVote[]
+
+  @@index([createdAt])
+}
+
+model PollVote {
+  id        String   @id @default(nanoid())
+  pollId    String
+  userName  String
+  option    Int
+  createdAt DateTime @default(now())
+  poll      Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userName], references: [name], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([pollId, userName])
 }
