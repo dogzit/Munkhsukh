@@ -1,6 +1,5 @@
 import prisma from "@/lib/prisma";
-import { isAdminFromHeaders } from "@/lib/requireAuth";
-import { getMyRoles } from "@/lib/roles";
+import { getMyRoles, isAdmin } from "@/lib/roles";
 import { pushToUser } from "@/lib/push";
 import { NextRequest, NextResponse, after } from "next/server";
 
@@ -20,7 +19,7 @@ export async function DELETE(
     const post = await prisma.branchPost.findUnique({ where: { id }, select: { userName: true } });
     if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    if (post.userName !== userName && !isAdminFromHeaders(req)) {
+    if (post.userName !== userName && !(await isAdmin(req))) {
       return NextResponse.json({ error: "Зөвхөн өөрийн нийтлэлийг устгана" }, { status: 403 });
     }
 

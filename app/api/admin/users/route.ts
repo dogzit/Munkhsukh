@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { isAdminFromHeaders } from "@/lib/requireAuth";
+import { isAdmin } from "@/lib/roles";
 import { NextRequest, NextResponse } from "next/server";
 
 type ApiError = { error: string };
@@ -10,7 +10,7 @@ type ApiError = { error: string };
  */
 export async function GET(req: NextRequest) {
   try {
-    if (!isAdminFromHeaders(req)) {
+    if (!(await isAdmin(req))) {
       return NextResponse.json({ error: "Unauthorized" } satisfies ApiError, {
         status: 401,
       });
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
  */
 export async function PATCH(req: NextRequest) {
   try {
-    if (!isAdminFromHeaders(req)) {
+    if (!(await isAdmin(req))) {
       return NextResponse.json({ error: "Unauthorized" } satisfies ApiError, {
         status: 401,
       });

@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { isAdminFromHeaders } from "@/lib/requireAuth";
+import { isAdmin } from "@/lib/roles";
 import { NextRequest, NextResponse, after } from "next/server";
 import { pushToUser } from "@/lib/push";
 
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
-    if (!isAdminFromHeaders(req)) {
+    if (!(await isAdmin(req))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

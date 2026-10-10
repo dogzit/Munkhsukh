@@ -37,12 +37,5 @@ export function isAdmin(user: AuthUser): boolean {
   return user.role === "ADMIN" || user.name.toLowerCase() === "admin";
 }
 
-/**
- * Middleware-ээр дамжуулсан header-аас админ эсэхийг шалгана.
- * API route-уудад ашиглах: x-user-role нь JWT payload дээр суурилна.
- */
-export function isAdminFromHeaders(req: Request): boolean {
-  const role = req.headers.get("x-user-role");
-  const name = req.headers.get("x-user-name");
-  return role === "ADMIN" || (name ?? "").toLowerCase() === "admin";
-}
+// Админ эсэхийг API route-уудад lib/roles.ts-ийн isAdmin(req)-ээр шалгана:
+// JWT дээрх role нь эрх хасагдсаны дараа ч 30 хоног хүртэл хуучин хэвээр үлддэг.

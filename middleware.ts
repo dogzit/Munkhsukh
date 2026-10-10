@@ -18,10 +18,13 @@ async function generateHash(message: string) {
   return hashHex;
 }
 
+// lib/auth.ts-ийн isWeakJwtSecret-тэй ижил дүрэм (middleware тусдаа runtime-д ажилладаг)
+const PLACEHOLDER_SECRET = "change-this-to-a-long-random-string-in-production";
+
 async function getJwtSecret() {
   const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    // Хэрэв JWT_SECRET байхгүй бол DATABASE_URL-аас hash үүсгэж ашиглана
+  if (!secret || secret.length < 32 || secret === PLACEHOLDER_SECRET) {
+    // JWT_SECRET байхгүй эсвэл сул бол нууц DATABASE_URL-аас hash үүсгэнэ
     return await generateHash(process.env.DATABASE_URL ?? "dev");
   }
   return secret;

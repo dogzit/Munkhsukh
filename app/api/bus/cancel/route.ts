@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isAdminFromHeaders } from "@/lib/requireAuth";
+import { isAdmin } from "@/lib/roles";
 import { sendMail } from "@/lib/mailer";
 
 function cancelledEmailTemplate(args: {
@@ -55,8 +55,8 @@ export async function POST(req: NextRequest) {
     }
 
     const isOwner = booking.userName === userName;
-    const isAdmin = isAdminFromHeaders(req);
-    if (!isOwner && !isAdmin) {
+    const adminUser = await isAdmin(req);
+    if (!isOwner && !adminUser) {
       return NextResponse.json(
         { error: "Бусдын захиалгыг цуцлах боломжгүй" },
         { status: 403 },
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     if (booking.email) {
       const tpl = cancelledEmailTemplate({
         seatId: booking.seatId,
-        byAdmin: !isOwner && isAdmin,
+        byAdmin: !isOwner && adminUser,
       });
       void sendMail({ to: booking.email, ...tpl });
     }

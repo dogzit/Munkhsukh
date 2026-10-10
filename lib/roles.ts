@@ -23,6 +23,11 @@ export async function getMyRoles(req: Request): Promise<MyRoles | null> {
   return { ...user, role: isAdminName ? "ADMIN" : user.role };
 }
 
+/** Админ эсэх — өгөгдлийн сангаас (эрх хасагдвал шууд хүчинтэй) */
+export async function isAdmin(req: Request) {
+  return (await getMyRoles(req))?.role === "ADMIN";
+}
+
 /** Админ эсвэл ангийн дарга — даалгавар удирдах, нийтлэл/мессеж устгах */
 export async function canManageClass(req: Request) {
   const r = await getMyRoles(req);

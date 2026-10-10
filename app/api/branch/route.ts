@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { isValidBranch } from "@/lib/branches";
-import { isAdminFromHeaders } from "@/lib/requireAuth";
+import { isAdmin } from "@/lib/roles";
 import { NextRequest, NextResponse } from "next/server";
 
 type ApiError = { error: string };
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       myBranch: me?.branch ?? null,
       amBranchLeader: me?.branchLeader ?? false,
-      isAdmin: isAdminFromHeaders(req),
+      isAdmin: await isAdmin(req),
       members,
     });
   } catch (e) {
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const admin = isAdminFromHeaders(req);
+    const admin = await isAdmin(req);
     const target =
       typeof body?.name === "string" && body.name.trim() ? body.name.trim() : userName;
 

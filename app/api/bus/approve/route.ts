@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isAdminFromHeaders } from "@/lib/requireAuth";
+import { isAdmin } from "@/lib/roles";
 import { busApprovedTemplate, notifyUserByEmail } from "@/lib/notify";
 import { pushToUser } from "@/lib/push";
 
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     if (!userName) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (!isAdminFromHeaders(req)) {
+    if (!(await isAdmin(req))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

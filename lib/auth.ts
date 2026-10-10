@@ -24,19 +24,26 @@ export function hashPin(pin: string, salt: string) {
   return createHash("sha256").update(`${salt}:${pin}`).digest("hex");
 }
 
+// .env.example-ийн жишээ утга — хэн ч таах боломжтой тул хэзээ ч ашиглахгүй
+const PLACEHOLDER_SECRET = "change-this-to-a-long-random-string-in-production";
+
+/** Сул эсвэл жишээ JWT_SECRET-ийг хүлээж авахгүй */
+export function isWeakJwtSecret(secret: string | undefined): boolean {
+  return !secret || secret.length < 32 || secret === PLACEHOLDER_SECRET;
+}
+
 function getJwtSecret() {
   const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    // Dev fallback: don't crash if the env var isn't set.
-    // For production, set `JWT_SECRET` to a long random string.
-    console.warn(
-      "Missing JWT_SECRET env var; using insecure fallback secret.",
-    );
+  if (isWeakJwtSecret(secret)) {
+    // JWT_SECRET байхгүй/сул бол нууц DATABASE_URL-аас үүсгэнэ
+    // (middleware.ts-тэй яг ижил аргаар). Production дээр 32+ тэмдэгт
+    // санамсаргүй JWT_SECRET тохируулах нь хамгийн зөв.
+    console.warn("JWT_SECRET missing or weak; deriving secret from DATABASE_URL.");
     return createHash("sha256")
       .update(process.env.DATABASE_URL ?? "dev")
       .digest("hex");
   }
-  return secret;
+  return secret!;
 }
 
 export async function createAuthToken(user: {

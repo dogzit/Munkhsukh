@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { branchName, isValidBranch } from "@/lib/branches";
 import { pushToUser } from "@/lib/push";
-import { isAdminFromHeaders } from "@/lib/requireAuth";
+import { isAdmin } from "@/lib/roles";
 import { NextRequest, NextResponse, after } from "next/server";
 
 type ApiError = { error: string };
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     if (!isValidBranch(requested)) {
       return NextResponse.json({ error: "branch required" } satisfies ApiError, { status: 400 });
     }
-    if (requested !== me?.branch && !isAdminFromHeaders(req)) {
+    if (requested !== me?.branch && !(await isAdmin(req))) {
       return NextResponse.json(
         { error: "Зөвхөн өөрийн салааны хэсгийг харна" } satisfies ApiError,
         { status: 403 },
