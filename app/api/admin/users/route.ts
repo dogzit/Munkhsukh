@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
 
 /**
  * PATCH /api/admin/users
- * Body: { name: string, role?: "ADMIN" | "LEADER" | "USER", branchLeader?: boolean }
+ * Body: { name: string, role?: "ADMIN" | "LEADER" | "TEACHER" | "USER", branchLeader?: boolean }
  * Хэрэглэгчийн эрх (админ / ангийн дарга / хэрэглэгч) болон салааны
  * даргын эрхийг өөрчлөх (өөрийн админ эрхийг хасахгүй)
  */
@@ -73,9 +73,9 @@ export async function PATCH(req: NextRequest) {
         status: 400,
       });
     }
-    if (role !== undefined && role !== "ADMIN" && role !== "LEADER" && role !== "USER") {
+    if (role !== undefined && role !== "ADMIN" && role !== "LEADER" && role !== "TEACHER" && role !== "USER") {
       return NextResponse.json(
-        { error: "role must be ADMIN, LEADER or USER" } satisfies ApiError,
+        { error: "role must be ADMIN, LEADER, TEACHER or USER" } satisfies ApiError,
         { status: 400 },
       );
     }

@@ -21,5 +21,13 @@ export function useMyRoles() {
   }, []);
   const isAdmin = roles?.role === "ADMIN";
   const isLeader = roles?.role === "LEADER";
-  return { roles, isAdmin, isLeader, canManage: isAdmin || isLeader };
+  const isTeacher = roles?.role === "TEACHER";
+  return {
+    roles,
+    isAdmin,
+    isLeader,
+    isTeacher,
+    canManage: isAdmin || isLeader,
+    canPostTeacherNews: isAdmin || isTeacher,
+  };
 }

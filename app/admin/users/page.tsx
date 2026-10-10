@@ -17,6 +17,7 @@ import {
   Cake,
   Crown,
   Star,
+  GraduationCap,
 } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
 import { BRANCHES } from "@/lib/branches";
@@ -64,6 +65,7 @@ export default function AdminUsersPage() {
   const ROLE_LABEL: Record<string, string> = {
     USER: "Хэрэглэгч",
     LEADER: "Ангийн дарга",
+    TEACHER: "Ангийн багш",
     ADMIN: "Админ",
   };
 
@@ -360,9 +362,9 @@ export default function AdminUsersPage() {
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
                     <div className="flex items-center gap-1.5">
                       {busy && <Loader2 size={12} className="animate-spin text-on-surface-muted" />}
-                      {isAdmin ? <Shield size={12} className="text-amber-400" /> : u.role === "LEADER" ? <Crown size={12} className="text-violet-400" /> : <UserIcon size={12} className="text-on-surface-muted" />}
+                      {isAdmin ? <Shield size={12} className="text-amber-400" /> : u.role === "LEADER" ? <Crown size={12} className="text-violet-400" /> : u.role === "TEACHER" ? <GraduationCap size={12} className="text-emerald-400" /> : <UserIcon size={12} className="text-on-surface-muted" />}
                       <select
-                        value={u.role === "ADMIN" || u.role === "LEADER" ? u.role : "USER"}
+                        value={["ADMIN", "LEADER", "TEACHER"].includes(u.role) ? u.role : "USER"}
                         onChange={(e) => setRole(u, e.target.value)}
                         disabled={busy || isMe}
                         aria-label="Эрх"
@@ -371,6 +373,7 @@ export default function AdminUsersPage() {
                       >
                         <option value="USER">Хэрэглэгч</option>
                         <option value="LEADER">Ангийн дарга</option>
+                        <option value="TEACHER">Ангийн багш</option>
                         <option value="ADMIN">Админ</option>
                       </select>
                     </div>
@@ -409,6 +412,10 @@ export default function AdminUsersPage() {
           <ul className="text-xs text-on-surface-muted space-y-1 list-disc list-inside">
             <li>Даалгавар нэмэх/засах/устгах (админ панелгүй)</li>
             <li>Мэдээний нийтлэл, чат мессеж устгах</li>
+          </ul>
+          <p className="text-xs font-bold text-emerald-400 mt-3">🎓 Ангийн багш</p>
+          <ul className="text-xs text-on-surface-muted space-y-1 list-disc list-inside">
+            <li>Багшийн мэдээ оруулах (үйл ажиллагаа, бэлдэх зүйлс), зурагтай</li>
           </ul>
           <p className="text-xs font-bold text-sky-400 mt-3">⭐ Салааны дарга</p>
           <ul className="text-xs text-on-surface-muted space-y-1 list-disc list-inside">

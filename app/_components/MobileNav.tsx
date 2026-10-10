@@ -21,6 +21,7 @@ import {
   Crown,
   Shield,
   BarChart3,
+  Megaphone,
 } from "lucide-react";
 import { useMyRoles } from "./useMyRoles";
 
@@ -36,6 +37,7 @@ const navItems: NavItem[] = [
 
 // "Бусад" цэсэнд
 const moreItems: (NavItem & { color: string })[] = [
+  { icon: Megaphone, label: "Багшийн мэдээ", href: "/teacher-news", color: "from-emerald-500 to-green-600" },
   { icon: Newspaper, label: "Мэдээ", href: "/feed", color: "from-orange-500 to-amber-500" },
   { icon: BarChart3, label: "Санал асуулга", href: "/poll", color: "from-indigo-500 to-blue-500" },
   { icon: Users, label: "Салаа", href: "/branch", color: "from-violet-500 to-fuchsia-500" },

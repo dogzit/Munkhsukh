@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ChevronRight, Crown, Star, Shield } from "lucide-react";
+import { Search, ChevronRight, Crown, Star, Shield, GraduationCap } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
 import AppHeader from "@/app/_components/AppHeader";
 import { BRANCHES, branchName } from "@/lib/branches";
@@ -117,6 +117,7 @@ export default function StudentsPage() {
                     {s.fullName || s.name}
                     {s.role === "ADMIN" && <Shield size={12} className="text-amber-400 shrink-0" />}
                     {s.role === "LEADER" && <Crown size={12} className="text-violet-400 shrink-0" />}
+                    {s.role === "TEACHER" && <GraduationCap size={12} className="text-emerald-400 shrink-0" />}
                     {s.branchLeader && <Star size={11} className="text-sky-400 fill-sky-400 shrink-0" />}
                   </p>
                   <p className="text-[10px] text-on-surface-muted truncate">
@@ -135,6 +136,7 @@ export default function StudentsPage() {
           <p className="text-[10px] text-on-surface-muted/60 text-center pt-2">
             <Shield size={10} className="inline text-amber-400" /> Админ •{" "}
             <Crown size={10} className="inline text-violet-400" /> Ангийн дарга •{" "}
+            <GraduationCap size={10} className="inline text-emerald-400" /> Ангийн багш •{" "}
             <Star size={10} className="inline text-sky-400 fill-sky-400" /> Салааны дарга
           </p>
         )}

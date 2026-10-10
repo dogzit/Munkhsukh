@@ -23,6 +23,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   BarChart3,
+  Megaphone,
 } from "lucide-react";
 
 const navItems = [
@@ -32,6 +33,7 @@ const navItems = [
   { icon: <CheckSquare size={20} />, label: "Todo", href: "/todo" },
   { icon: <MessageCircle size={20} />, label: "Чат", href: "/chat" },
   { icon: <Search size={20} />, label: "Хайлт", href: "/search" },
+  { icon: <Megaphone size={20} />, label: "Багшийн мэдээ", href: "/teacher-news" },
   { icon: <Newspaper size={20} />, label: "Мэдээ", href: "/feed" },
   { icon: <Users size={20} />, label: "Салаа", href: "/branch" },
   { icon: <BarChart3 size={20} />, label: "Санал асуулга", href: "/poll" },

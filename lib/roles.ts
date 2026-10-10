@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 
 export type MyRoles = {
-  role: string; // USER | LEADER | ADMIN
+  role: string; // USER | LEADER | TEACHER | ADMIN
   branch: number | null;
   branchLeader: boolean;
 };
@@ -32,4 +32,10 @@ export async function isAdmin(req: Request) {
 export async function canManageClass(req: Request) {
   const r = await getMyRoles(req);
   return r?.role === "ADMIN" || r?.role === "LEADER";
+}
+
+/** Админ эсвэл ангийн багш — багшийн мэдээ оруулах */
+export async function canPostTeacherNews(req: Request) {
+  const r = await getMyRoles(req);
+  return r?.role === "ADMIN" || r?.role === "TEACHER";
 }
