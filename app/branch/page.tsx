@@ -98,7 +98,8 @@ export default function BranchPage() {
   }, [viewing, loadPosts]);
 
   const chooseBranch = async (id: number) => {
-    if (!window.confirm(`${branchName(id)}-г сонгох уу?\nДараа нь солих бол админд хандана.`)) return;
+    const note = info?.isAdmin ? "" : "\nДараа нь солих бол админд хандана.";
+    if (!window.confirm(`${branchName(id)}-г сонгох уу?${note}`)) return;
     setChoosing(id);
     try {
       const res = await fetch("/api/branch", {
@@ -286,7 +287,22 @@ export default function BranchPage() {
         {/* Салааны карт + гишүүд */}
         <div className="rounded-2xl border border-border bg-surface-elevated overflow-hidden">
           <div className={`bg-gradient-to-br ${current.gradient} px-4 py-4`}>
-            <p className="text-xl font-black text-white">{current.name}</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xl font-black text-white">{current.name}</p>
+              {/* Админ өөрөө салаанд орох / солих */}
+              {info.isAdmin && info.myBranch !== current.id && (
+                <button onClick={() => chooseBranch(current.id)} disabled={choosing !== null}
+                  className="shrink-0 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold backdrop-blur-sm active:scale-95 disabled:opacity-60 transition-all flex items-center gap-1">
+                  {choosing === current.id ? <Loader2 size={12} className="animate-spin" /> : null}
+                  {info.myBranch ? "Энэ салаа руу шилжих" : "Энэ салаанд орох"}
+                </button>
+              )}
+              {info.isAdmin && info.myBranch === current.id && (
+                <span className="shrink-0 px-2.5 py-1 rounded-xl bg-black/20 text-white text-[10px] font-bold">
+                  Таны салаа
+                </span>
+              )}
+            </div>
             <p className="text-[11px] text-white/80 flex items-center gap-1 mt-0.5">
               <Lock size={11} /> Зөвхөн салааныхан харна
             </p>
