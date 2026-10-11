@@ -18,6 +18,8 @@ self.addEventListener("push", (event) => {
       icon: "/icon.png",
       badge: "/icon.png",
       data: { href: data.href || "/" },
+      // Ижил tag-тай бол өмнөхийг нь орлож, дахин дуугарна
+      ...(data.tag ? { tag: data.tag, renotify: true } : {}),
     }),
   );
 });

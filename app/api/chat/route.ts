@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { pushToUser } from "@/lib/push";
+import { pushToAllUsers, pushToUser } from "@/lib/push";
 import { NextRequest, NextResponse, after } from "next/server";
 
 export async function GET() {
@@ -70,16 +70,27 @@ export async function POST(req: NextRequest) {
       data: { userName, text, image, replyToId: original?.id ?? null },
     });
 
-    // Хариулт авсан хүнд утсанд мэдэгдэл
-    if (original && original.userName !== userName) {
-      after(() =>
-        pushToUser(original.userName, {
+    const preview = text ? text.slice(0, 100) : "📷 Зураг";
+    const repliedTo = original && original.userName !== userName ? original.userName : null;
+
+    after(async () => {
+      // Хариулт авсан хүнд тусгай мэдэгдэл, бусдад энгийн чатын мэдэгдэл
+      if (repliedTo) {
+        await pushToUser(repliedTo, {
           title: `💬 ${userName} танд хариулав`,
-          body: text ? text.slice(0, 100) : "📷 Зураг",
+          body: preview,
           href: "/chat",
-        }),
-      );
-    }
+          tag: "chat",
+        });
+      }
+      await pushToAllUsers({
+        title: `💬 ${userName}`,
+        body: preview,
+        href: "/chat",
+        tag: "chat",
+        exceptUserName: repliedTo ? [userName, repliedTo] : userName,
+      });
+    });
 
     return NextResponse.json(msg, { status: 201 });
   } catch (e) {

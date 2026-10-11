@@ -5,6 +5,8 @@ type PushPayload = {
   title: string;
   body?: string;
   href?: string;
+  // Ижил tag-тай мэдэгдэл өмнөхийгөө орлоно (чатын мессеж овоорохгүй)
+  tag?: string;
 };
 
 let configured: boolean | null = null;
@@ -59,12 +61,13 @@ async function sendToSubs(
 
 /** Бүх хэрэглэгчийн утас руу push илгээнэ. Await хийхгүй дуудаж болно. */
 export async function pushToAllUsers(
-  payload: PushPayload & { exceptUserName?: string },
+  payload: PushPayload & { exceptUserName?: string | string[] },
 ) {
   try {
     const { exceptUserName, ...rest } = payload;
+    const except = [exceptUserName ?? []].flat();
     const subs = await prisma.pushSubscription.findMany({
-      where: exceptUserName ? { NOT: { userName: exceptUserName } } : {},
+      where: except.length ? { userName: { notIn: except } } : {},
     });
     await sendToSubs(subs, rest);
   } catch (e) {

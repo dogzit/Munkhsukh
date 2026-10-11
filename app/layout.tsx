@@ -6,6 +6,7 @@ import AuthGuard from "./_components/AuthGuard";
 import ThemeProvider from "./_components/ThemeProvider";
 import AppShell from "./_components/AppShell";
 import { siteUrl } from "@/lib/siteUrl";
+import InAppBrowserNotice from "./_components/InAppBrowserNotice";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({
@@ -55,6 +56,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-surface text-on-surface transition-colors duration-300`}
       >
+        <InAppBrowserNotice />
         <ThemeProvider>
           <AuthGuard>
             <AppShell>{children}</AppShell>
