@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import LogoutConfirm from "./LogoutConfirm";
 import { useMyRoles } from "./useMyRoles";
+import { canUseLeave } from "@/lib/leave";
 import {
   Home,
   BookOpen,
@@ -24,6 +25,7 @@ import {
   PanelLeft,
   BarChart3,
   Megaphone,
+  CalendarOff,
 } from "lucide-react";
 
 const navItems = [
@@ -50,7 +52,7 @@ function isActive(pathname: string, href: string) {
 }
 
 export default function Sidebar() {
-  const { isLeader } = useMyRoles();
+  const { isLeader, roles } = useMyRoles();
   const router = useRouter();
   const pathname = usePathname();
   const [showLogout, setShowLogout] = useState(false);
@@ -133,6 +135,9 @@ export default function Sidebar() {
           ...navItems,
           ...(isLeader
             ? [{ icon: <Crown size={20} />, label: "Даалгавар удирдах", href: "/manage/homework" }]
+            : []),
+          ...(canUseLeave(roles?.role)
+            ? [{ icon: <CalendarOff size={20} />, label: "Чөлөө авах", href: "/leave" }]
             : []),
         ].map((item) => {
           const active = isActive(pathname, item.href);

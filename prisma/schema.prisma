@@ -36,6 +36,7 @@ model User {
   branchPosts BranchPost[]
   pollVotes   PollVote[]
   teacherPosts TeacherPost[]
+  leaveRequests LeaveRequest[]
 }
 
 model Todo {
@@ -290,4 +291,26 @@ model TeacherPost {
   user      User     @relation(fields: [userName], references: [name], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([category, createdAt])
+}
+
+// --- Чөлөө авах хүсэлт (ангийн багш шийднэ) ---
+model LeaveRequest {
+  id         String    @id @default(nanoid())
+  userName   String
+  // SICK: өвчтэй (эмнэлгийн бичгийн зураг), PERSONAL: чөлөөтэй (шалтгаан)
+  type       String
+  // YYYY-MM-DD
+  fromDate   String
+  toDate     String
+  reason     String    @default("")
+  image      String?
+  // PENDING | APPROVED | DECLINED
+  status     String    @default("PENDING")
+  decidedBy  String?
+  decidedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userName], references: [name], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([status, createdAt])
+  @@index([userName, createdAt])
 }

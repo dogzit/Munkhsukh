@@ -22,8 +22,10 @@ import {
   Shield,
   BarChart3,
   Megaphone,
+  CalendarOff,
 } from "lucide-react";
 import { useMyRoles } from "./useMyRoles";
+import { canUseLeave } from "@/lib/leave";
 
 type NavItem = { icon: LucideIcon; label: string; href: string };
 
@@ -58,7 +60,7 @@ export default function MobileNav() {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const { isAdmin, isLeader } = useMyRoles();
+  const { isAdmin, isLeader, roles } = useMyRoles();
 
   // Хуудас солигдоход цэсийг хаана (render үед state тохируулах)
   const [lastPath, setLastPath] = useState(pathname);
@@ -70,6 +72,9 @@ export default function MobileNav() {
   const extraItems: (NavItem & { color: string })[] = [
     ...(isLeader
       ? [{ icon: Crown, label: "Даалгавар удирдах", href: "/manage/homework", color: "from-violet-600 to-indigo-500" }]
+      : []),
+    ...(canUseLeave(roles?.role)
+      ? [{ icon: CalendarOff, label: "Чөлөө авах", href: "/leave", color: "from-teal-500 to-cyan-500" }]
       : []),
     ...(isAdmin
       ? [{ icon: Shield, label: "Админ панел", href: "/admin", color: "from-rose-500 to-pink-500" }]
