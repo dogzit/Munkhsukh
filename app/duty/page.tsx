@@ -75,7 +75,7 @@ export default function DutyUserPage() {
   }, [sorted, today]);
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-teal-950 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-teal-950 text-white">
       {/* Background blobs */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-28 -left-28 h-72 w-72 rounded-full bg-teal-500/20 blur-3xl" />

@@ -84,7 +84,7 @@ export default function BusManager() {
             </div>
 
             {/* Автобусны Их Бие (Урт хувилбар) */}
-            <div className="mt-24 relative w-[380px] max-w-full h-[1050px] bg-zinc-950 rounded-[80px] border-[10px] border-zinc-900 shadow-2xl overflow-y-auto custom-scrollbar">
+            <div className="mt-24 relative w-[380px] h-[1050px] bg-zinc-950 rounded-[80px] border-[10px] border-zinc-900 shadow-2xl overflow-y-auto custom-scrollbar">
 
                 {/* Жолоочийн хэсэг */}
                 <div className="absolute top-0 w-full h-32 border-b-4 border-zinc-900 bg-zinc-900/30 flex flex-col items-center justify-end pb-4">

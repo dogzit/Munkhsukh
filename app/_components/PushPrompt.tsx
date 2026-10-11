@@ -33,7 +33,7 @@ export default function PushPrompt() {
 
   return (
     <div
-      className="push-prompt fixed inset-x-2 z-30 bottom-[calc(4.25rem_+_env(safe-area-inset-bottom))]
+      className="fixed inset-x-2 z-30 bottom-[calc(4.25rem_+_env(safe-area-inset-bottom))]
         lg:bottom-4 lg:left-auto lg:right-4 lg:w-96"
     >
       <div className="rounded-3xl border border-accent/30 bg-surface/95 backdrop-blur-xl shadow-2xl p-4">

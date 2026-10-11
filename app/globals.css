@@ -15,50 +15,6 @@
   --color-card-hover: rgba(255, 255, 255, 0.06);
 }
 
-/* Утсан дээр хуудас хажуу тийш гүйлгэгдэхээс сэргийлнэ.
-   clip нь hidden-ээс ялгаатай нь sticky header-ийг эвдэхгүй. */
-html,
-body {
-  max-width: 100%;
-  overflow-x: clip;
-}
-
-/* Хуучин iPhone (iOS 15-) clip-ийг дэмждэггүй */
-@supports not (overflow-x: clip) {
-  body {
-    overflow-x: hidden;
-  }
-}
-
-/* Зайгүй урт текст (линк гэх мэт) дэлгэцээс хальж гарахгүй */
-body {
-  overflow-wrap: anywhere;
-}
-
-/* Утсан дээр keyboard нээгдэх үед доод цэсийг нууж, чатын бичих
-   талбарыг keyboard-д наалдуулна (KeyboardWatcher тохируулна) */
-.kb-open .mobile-nav,
-.kb-open .push-prompt {
-  display: none !important;
-}
-.kb-open .app-shell-main {
-  padding-bottom: 0 !important;
-}
-.kb-open .chat-composer {
-  bottom: 0 !important;
-  padding-bottom: 0.5rem;
-}
-
-/* iPhone Safari 16px-ээс жижиг input дээр дарахад томруулж, буцааж
-   жижигрүүлдэггүй — хуудас хажуу тийш гүйлгэгдэх шалтгаан болдог */
-@media (max-width: 640px) {
-  input,
-  textarea,
-  select {
-    font-size: 16px !important;
-  }
-}
-
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    🌙 DARK — Цэвэр хар
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */

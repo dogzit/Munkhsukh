@@ -478,7 +478,7 @@ export default function HomeworkDatePage() {
                         </button>
                       </div>
                     {/* Title */}
-                    <p className="text-on-surface font-semibold leading-relaxed whitespace-pre-line break-words [overflow-wrap:anywhere] group-hover:text-on-surface transition-colors">
+                    <p className="text-on-surface font-semibold leading-relaxed whitespace-pre-line group-hover:text-on-surface transition-colors">
                       {item.title}
                     </p>
                     {/* Images */}

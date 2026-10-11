@@ -400,7 +400,7 @@ export default function ChatPage() {
 
       {/* Input */}
       <div
-        className="chat-composer sticky bottom-[calc(3.5rem_+_env(safe-area-inset-bottom))] lg:bottom-0
+        className="sticky bottom-[calc(3.5rem_+_env(safe-area-inset-bottom))] lg:bottom-0
           bg-surface/80 backdrop-blur-xl border-t border-border px-4 py-3"
       >
         {imagePreview && (
@@ -423,7 +423,6 @@ export default function ChatPage() {
           <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.webp" className="hidden"
             onChange={(e) => pickImage(e.target.files?.[0])} />
           <input ref={inputRef} value={text} onChange={(e) => setText(e.target.value)}
-            onFocus={() => setTimeout(() => bottomRef.current?.scrollIntoView({ block: "end" }), 300)}
             onKeyDown={(e) => e.key === "Enter" && send()}
             placeholder={replyTo ? "Хариулт бичих..." : "Мессеж бичих..."}
             maxLength={500}
