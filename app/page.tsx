@@ -54,8 +54,8 @@ export default function HomePage() {
         subtitle={dateStr || "11A Анги"}
       />
 
-      {/* Background */}
-      <div className="fixed inset-0 -z-10">
+      {/* Background — overflow-hidden: том гэрэлтэх дугуйнууд утасны дэлгэцээс хальж хажуу тийш гүйлгэгддэг байсан */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
         <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-violet-600/20 to-purple-600/10 blur-[120px] animate-pulse" />
         <div
           className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-cyan-500/15 to-blue-500/10 blur-[120px] animate-pulse"
