@@ -119,7 +119,8 @@ export default function AppHeader({
       {showBack && (
         <button
           onClick={() => (onBack ? onBack() : router.push("/"))}
-          className="p-2 hover:bg-card-hover rounded-xl transition-all shrink-0"
+          // Утсан дээр нүүр рүү буцах товч доод цэсэнд байгаа тул зөвхөн onBack-тэй үед харуулна
+          className={`p-2 -ml-1 hover:bg-card-hover rounded-xl transition-all shrink-0 ${onBack ? "" : "hidden lg:block"}`}
           aria-label="Буцах"
         >
           <ArrowLeft size={20} />

@@ -29,13 +29,13 @@ export default function ThemeToggle() {
     <div className="relative hover:cursor-pointer">
       <button
         onClick={() => setOpen(!open)}
-        className="p-2.5 rounded-2xl bg-surface-elevated border border-border
+        className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-surface-elevated border border-border
           hover:scale-110 active:scale-95 transition-all duration-200
           text-on-surface-muted hover:text-on-surface flex items-center gap-1.5"
         aria-label="Theme сонгох"
       >
         <span className="text-sm">{current?.icon}</span>
-        <Palette size={14} />
+        <Palette size={14} className="hidden sm:block" />
       </button>
 
       {open && (

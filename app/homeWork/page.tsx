@@ -224,7 +224,7 @@ export default function HomeworkTimelinePage() {
         }
       />
 
-      <div className="p-6">
+      <div className="px-3 py-4 sm:p-6">
       {/* Background Orbs */}
       <div className="fixed inset-0 overflow-hidden -z-10">
         <div className="absolute top-0 -left-4 w-80 h-80 bg-pink-600 rounded-full mix-blend-multiply filter blur-[140px] opacity-15 animate-pulse" />
@@ -244,8 +244,8 @@ export default function HomeworkTimelinePage() {
 
       <div className="max-w-2xl mx-auto">
         {/* Filter + Refresh */}
-        <div className="bg-surface-elevated border border-border backdrop-blur-xl rounded-3xl p-4 mb-6 shadow-2xl">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-surface-elevated border border-border backdrop-blur-xl rounded-3xl p-3.5 sm:p-4 mb-4 sm:mb-6 shadow-2xl">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
             <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">
               Хичээл шүүх
             </span>
@@ -298,7 +298,7 @@ export default function HomeworkTimelinePage() {
         </div>
 
         {/* Week Navigation */}
-        <div className="flex items-center justify-between mb-6 bg-surface-elevated border border-border backdrop-blur-xl rounded-2xl px-4 py-3">
+        <div className="flex items-center justify-between mb-4 sm:mb-6 bg-surface-elevated border border-border backdrop-blur-xl rounded-2xl px-2 sm:px-4 py-2 sm:py-3">
           <button
             onClick={() => setWeekOffset((w) => w - 1)}
             className="p-2 hover:bg-card-hover rounded-xl transition-all hover:scale-110 active:scale-95"
@@ -382,8 +382,8 @@ export default function HomeworkTimelinePage() {
                 >
                   <div className="flex items-stretch">
                     {/* Date badge — left column */}
-                    <div className="w-20 flex-shrink-0 bg-gradient-to-b from-pink-600/20 to-orange-600/20 border-r border-white/5 flex flex-col items-center justify-center py-5 gap-1">
-                      <span className="text-3xl font-black text-white leading-none">
+                    <div className="w-16 sm:w-20 flex-shrink-0 bg-gradient-to-b from-pink-600/20 to-orange-600/20 border-r border-white/5 flex flex-col items-center justify-center py-4 sm:py-5 gap-1">
+                      <span className="text-2xl sm:text-3xl font-black text-white leading-none">
                         {dayNum}
                       </span>
                       <span className="text-[10px] font-bold text-pink-400/80 uppercase tracking-wider">
@@ -395,10 +395,11 @@ export default function HomeworkTimelinePage() {
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 px-5 py-4 min-w-0">
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">
+                    <div className="flex-1 px-3.5 sm:px-5 py-3.5 sm:py-4 min-w-0">
+                      <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2.5 sm:mb-3">
+                        <div className="min-w-0">
+                          {/* Утсан дээр зүүн талын огноотой давхардах тул нууна */}
+                          <p className="hidden sm:block text-xs text-gray-500 mb-1">
                             {formatDateDisplay(dateKey)}
                           </p>
                           {/* Subject pills */}
@@ -425,7 +426,7 @@ export default function HomeworkTimelinePage() {
                         </div>
                         {/* Preview image */}
                         {preview && (
-                          <div className="w-14 h-14 rounded-xl overflow-hidden border border-border flex-shrink-0 group-hover:border-white/20 transition-colors">
+                          <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl overflow-hidden border border-border flex-shrink-0 group-hover:border-white/20 transition-colors">
                             <img
                               src={preview}
                               alt=""
@@ -462,7 +463,7 @@ export default function HomeworkTimelinePage() {
                     </div>
 
                     {/* Arrow */}
-                    <div className="flex items-center pr-4">
+                    <div className="flex items-center pr-2 sm:pr-4">
                       <ChevronRight
                         size={16}
                         className="text-gray-600 group-hover:text-on-surface-muted group-hover:translate-x-0.5 transition-all duration-200"
