@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { Bell, Check, CheckCheck, X } from "lucide-react";
 import PushToggle from "./PushToggle";
 
@@ -31,6 +32,7 @@ export default function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -54,7 +56,9 @@ export default function NotificationBell() {
   // Гадна дарахад хаана
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      const t = e.target as Node;
+      // Цонх body руу portal-оор гардаг тул хоёуланг нь шалгана
+      if (dropdownRef.current && !dropdownRef.current.contains(t) && !panelRef.current?.contains(t)) {
         setOpen(false);
       }
     }
@@ -118,12 +122,15 @@ export default function NotificationBell() {
       </button>
 
       {/* Dropdown */}
-      {open && (
+      {/* body руу portal — header-ийн blur/animation байрлалыг нь
+          хазайлгадаг байсан. Утсан дээр дэлгэцийн дээд хэсэгт голлоно */}
+      {open && createPortal(
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          {/* Утсан дээр дэлгэцийн хоёр захаас 12px зайтай бүтэн өргөнөөр,
-              том дэлгэц дээр хонхны доор */}
-          <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 z-50 sm:w-80 max-h-[70vh] overflow-hidden
+          <div className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} />
+          <div ref={panelRef}
+            className="fixed z-[70] left-1/2 -translate-x-1/2 top-[calc(env(safe-area-inset-top)+4rem)]
+              w-[calc(100vw-1.5rem)] max-w-sm sm:left-auto sm:right-4 sm:translate-x-0 sm:w-80
+              max-h-[70vh] overflow-hidden
             bg-surface border border-border rounded-2xl shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
@@ -201,7 +208,8 @@ export default function NotificationBell() {
               )}
             </div>
           </div>
-        </>
+        </>,
+        document.body,
       )}
     </div>
   );
