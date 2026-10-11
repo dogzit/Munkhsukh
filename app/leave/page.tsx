@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ImagePlus, Loader2, Send, X, CalendarDays, FileText } from "lucide-react";
+import { Check, ImagePlus, Loader2, Send, X, CalendarDays, FileText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import AppHeader from "@/app/_components/AppHeader";
 import Skeleton from "@/app/_components/Skeleton";
@@ -43,7 +43,7 @@ function rangeLabel(r: { fromDate: string; toDate: string }) {
 
 export default function LeavePage() {
   const router = useRouter();
-  const { roles } = useMyRoles();
+  const { roles, isAdmin } = useMyRoles();
   const [loading, setLoading] = useState(true);
   const [canDecide, setCanDecide] = useState(false);
   const [mine, setMine] = useState<LeaveRequest[]>([]);
@@ -147,6 +147,17 @@ export default function LeavePage() {
     else toast.error("Цуцлахад алдаа гарлаа");
   };
 
+  const remove = async (r: LeaveRequest) => {
+    if (!confirm(`${r.fullName || r.userName}-ийн хүсэлтийг устгах уу? Буцаах боломжгүй.`)) return;
+    const res = await fetch(`/api/leave/${r.id}`, { method: "DELETE" }).catch(() => null);
+    if (res?.ok) {
+      toast.success("Устгагдлаа");
+      await load();
+    } else {
+      toast.error("Устгахад алдаа гарлаа");
+    }
+  };
+
   const decide = async (r: LeaveRequest, action: "approve" | "decline") => {
     if (deciding) return;
     setDeciding(r.id);
@@ -195,6 +206,12 @@ export default function LeavePage() {
             </p>
           </div>
           <span className={`shrink-0 px-2 py-1 rounded-xl text-[10px] font-black border ${st.cls}`}>{st.label}</span>
+          {mode === "review" && isAdmin && (
+            <button onClick={() => remove(r)} aria-label="Устгах" title="Устгах"
+              className="shrink-0 p-1.5 rounded-lg hover:bg-red-500/10 active:scale-90">
+              <Trash2 size={14} className="text-red-400" />
+            </button>
+          )}
         </div>
 
         {r.reason && (

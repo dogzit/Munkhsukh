@@ -52,7 +52,10 @@ export async function PATCH(req: NextRequest, context: Ctx) {
   }
 }
 
-/** DELETE /api/leave/:id — өөрийн хүлээгдэж буй хүсэлтийг цуцлах */
+/**
+ * DELETE /api/leave/:id
+ * Сурагч өөрийн хүлээгдэж буй хүсэлтийг цуцална; админ дурын хүсэлтийг устгана
+ */
 export async function DELETE(req: NextRequest, context: Ctx) {
   try {
     const userName = req.headers.get("x-user-name");
@@ -64,7 +67,8 @@ export async function DELETE(req: NextRequest, context: Ctx) {
       select: { userName: true, status: true },
     });
     if (!request) return NextResponse.json({ error: "Not found" } satisfies ApiError, { status: 404 });
-    if (request.userName !== userName || request.status !== "PENDING") {
+    const isOwnPending = request.userName === userName && request.status === "PENDING";
+    if (!isOwnPending && (await getMyRoles(req))?.role !== "ADMIN") {
       return NextResponse.json({ error: "Цуцлах боломжгүй" } satisfies ApiError, { status: 403 });
     }
 
