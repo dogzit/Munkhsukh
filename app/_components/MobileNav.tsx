@@ -151,7 +151,7 @@ export default function MobileNav() {
         </div>
       </div>
 
-      <nav className="lg:hidden fixed inset-x-0 bottom-0 z-50 border-t border-border bg-surface/85 backdrop-blur-xl safe-area-bottom">
+      <nav className="mobile-nav lg:hidden fixed inset-x-0 bottom-0 z-50 border-t border-border bg-surface/85 backdrop-blur-xl safe-area-bottom">
         <div className="flex items-stretch justify-around gap-0.5 px-1.5 pt-1.5 pb-1">
           {tabs.map((item) => {
             const Icon = item.icon;

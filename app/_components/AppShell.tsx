@@ -8,6 +8,7 @@ import RefreshButton from "./RefreshButton";
 import NotificationBell from "./NotificationBell";
 import MobileAdminPill from "./MobileAdminPill";
 import PushPrompt from "./PushPrompt";
+import KeyboardWatcher from "./KeyboardWatcher";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -28,13 +29,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen">
       {!isAdminPage && <Sidebar />}
 
-      <div className="flex-1 flex flex-col min-h-screen pb-[calc(3.75rem_+_env(safe-area-inset-bottom))] lg:pb-0">
+      <div className="app-shell-main flex-1 flex flex-col min-h-screen pb-[calc(3.75rem_+_env(safe-area-inset-bottom))] lg:pb-0">
         <main className="flex-1">{children}</main>
       </div>
 
       <MobileNav />
       <MobileAdminPill />
-      {!isAdminPage && <PushPrompt />}
+      {/* Чат дээр бичих талбартай давхцахгүйн тулд харуулахгүй */}
+      {!isAdminPage && pathname !== "/chat" && <PushPrompt />}
+      <KeyboardWatcher />
 
       {showFloatingActions && (
         <div className="fixed top-2.5 right-2.5 sm:top-4 sm:right-4 z-50 flex items-center gap-1.5 sm:gap-2">
