@@ -1,6 +1,5 @@
-// Чөлөө авах хэсэг — одоохондоо зөвхөн админд харагдана (туршилт).
-// Бүх хүнд нээх үед true болгоход л хангалттай.
-export const LEAVE_PUBLIC = false;
+// Чөлөө авах хэсэг — бүх хэрэглэгчид нээлттэй (false бол зөвхөн админ).
+export const LEAVE_PUBLIC = true;
 
 export const LEAVE_TYPES = [
   { id: "SICK", name: "Өвчтэй", emoji: "🤒", desc: "Эмнэлгийн бичгийн зураг оруулна" },
