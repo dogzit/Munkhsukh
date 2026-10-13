@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ff2a3d" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ff2a3d" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="b" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.2"/></filter>
+  </defs>
+  <g opacity="0.32">
+  <circle cx="200" cy="200" r="190" fill="url(#g)" opacity="0.5"/>
+  <g fill="none" stroke="#ff2a3d" stroke-linecap="round" stroke-linejoin="round" filter="url(#b)">
+    <!-- нүдний хүрээ -->
+    <path d="M40 200 Q200 70 360 200 Q200 330 40 200 Z" stroke-width="5" opacity="0.9"/>
+    <circle cx="200" cy="200" r="78" stroke-width="3" opacity="0.6"/>
+  </g>
+  <g fill="#ff2a3d" filter="url(#b)">
+    <!-- далавч дэлгэсэн шувуу (өөрийн загвар) -->
+    <path d="M200 168 L212 196 L200 250 L188 196 Z"/>
+    <path d="M212 192 Q252 170 296 150 Q272 176 282 182 Q256 190 262 198 Q236 204 214 206 Z"/>
+    <path d="M188 192 Q148 170 104 150 Q128 176 118 182 Q144 190 138 198 Q164 204 186 206 Z"/>
+    <path d="M200 244 L214 270 L200 262 L186 270 Z" opacity="0.85"/>
+    <circle cx="200" cy="160" r="9"/>
+  </g>
+</g>
+</svg>

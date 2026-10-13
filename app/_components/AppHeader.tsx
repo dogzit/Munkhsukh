@@ -115,7 +115,7 @@ export default function AppHeader({
   const router = useRouter();
 
   return (
-    <div className="sticky top-0 z-30 w-full bg-surface/80 backdrop-blur-xl border-b border-border px-3 sm:px-4 py-2.5 flex items-center gap-2 sm:gap-3">
+    <div className="sticky top-0 z-30 w-full bg-surface/95 backdrop-blur-xl border-b border-border px-3 sm:px-4 py-2.5 flex items-center gap-2 sm:gap-3">
       {showBack && (
         <button
           onClick={() => (onBack ? onBack() : router.push("/"))}

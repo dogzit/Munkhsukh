@@ -20,6 +20,7 @@ export const THEMES = [
   { id: "demonslayer", label: "Demon Slayer", icon: "🗡️", group: "Аниме" },
   { id: "naruto", label: "Naruto", icon: "🍥", group: "Аниме" },
   { id: "ghibli", label: "Ghibli", icon: "🌿", group: "Аниме" },
+  { id: "codegeass", label: "Code Geass", icon: "♟️", group: "Аниме" },
   // K-Pop
   { id: "blackpink", label: "Blackpink", icon: "🖤", group: "K-Pop" },
   { id: "borahae", label: "BTS", icon: "💜", group: "K-Pop" },

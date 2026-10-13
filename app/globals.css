@@ -844,6 +844,90 @@ button:hover {
   font-family: "Georgia", serif;
 }
 
+/* ── Code Geass — хар нил ягаан, алтан хээ, улаан шувуут нүд ── */
+.theme-codegeass {
+  --color-surface: #0a0612;
+  --color-surface-alt: #160c26;
+  --color-surface-elevated: rgba(120, 60, 190, 0.08);
+  --color-on-surface: #efe6ff;
+  --color-on-surface-muted: #9a88b8;
+  --color-border: rgba(212, 175, 55, 0.3);
+  --color-border-subtle: rgba(140, 80, 210, 0.18);
+  --color-accent: #e0263a;
+  --color-accent-glow: rgba(224, 38, 58, 0.3);
+  --color-card: rgba(120, 60, 190, 0.05);
+  --color-card-hover: rgba(212, 175, 55, 0.08);
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+}
+
+/* Шувуут нүд — хуудасны дэвсгэр бүр бүрхчихдэг тул бүх зүйлийн дээр
+   бүдэг гэрэл байдлаар (screen) зурна; дарахад саад болохгүй */
+.theme-codegeass body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+  background-image:
+    url("/themes/geass-bird.svg"),
+    radial-gradient(ellipse at 50% 0%, rgba(110, 40, 170, 0.28), transparent 60%),
+    radial-gradient(ellipse at 50% 100%, rgba(224, 38, 58, 0.1), transparent 55%);
+  background-repeat: no-repeat;
+  background-position: center 45%, center, center;
+  background-size: min(95vw, 600px) auto, 100% 100%, 100% 100%;
+  mix-blend-mode: screen;
+  opacity: 0.85;
+}
+
+/* Алтан хүрээ — хааны хувцасны хээ шиг */
+.theme-codegeass [class*="bg-surface-elevated"][class*="rounded"] {
+  box-shadow: inset 0 1px 0 rgba(212, 175, 55, 0.25), 0 0 0 1px rgba(212, 175, 55, 0.08);
+}
+
+.theme-codegeass [class*="border-border-subtle"] {
+  border-color: rgba(140, 80, 210, 0.2) !important;
+}
+
+.theme-codegeass [class*="shadow-2xl"],
+.theme-codegeass [class*="shadow-lg"] {
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.65), 0 0 22px rgba(224, 38, 58, 0.12) !important;
+}
+
+/* Өнгөт дүрс — нил ягаанаас улаан руу */
+.theme-codegeass [class*="bg-gradient-to-br"] {
+  background-image: linear-gradient(135deg, #5b2a91 0%, #9b1f4a 55%, #e0263a 100%) !important;
+}
+
+.theme-codegeass h1,
+.theme-codegeass h2 {
+  color: #f3e6c0;
+  text-shadow: 0 0 14px rgba(224, 38, 58, 0.35);
+  letter-spacing: 0.02em;
+}
+
+.theme-codegeass input,
+.theme-codegeass textarea,
+.theme-codegeass select {
+  background-color: rgba(22, 12, 38, 0.9);
+  border-color: rgba(212, 175, 55, 0.28);
+  color: #efe6ff;
+}
+
+.theme-codegeass input:focus,
+.theme-codegeass textarea:focus {
+  border-color: #e0263a;
+}
+
+.theme-codegeass input::placeholder,
+.theme-codegeass textarea::placeholder {
+  color: #6f5f8a;
+}
+
+.theme-codegeass ::selection {
+  background: rgba(224, 38, 58, 0.45);
+  color: #fff;
+}
+
 /* ── Counter-Strike 2 — бараан ган саарал, T улбар шар, CT цэнхэр ── */
 .theme-cs2 {
   --color-surface: #0d1014;
@@ -930,8 +1014,7 @@ button:hover {
 
 /* ── Rick & Morty — сансар, ногоон портал ── */
 .theme-rickmorty {
-  /* Бага зэрэг тунгалаг — ард нь од, портал харагдана */
-  --color-surface: rgba(5, 11, 16, 0.78);
+  --color-surface: #050b10;
   --color-surface-alt: #0a1820;
   --color-surface-elevated: rgba(151, 206, 76, 0.07);
   --color-on-surface: #e4f8d0;
@@ -945,9 +1028,14 @@ button:hover {
   font-family: "Trebuchet MS", "Arial Rounded MT Bold", sans-serif;
 }
 
-/* Од, портал гэрэл бүхий сансрын дэвсгэр */
-.theme-rickmorty {
-  background-color: #050b10;
+/* Од, портал гэрэл — хуудасны дэвсгэрийн дээр бүдэг гэрэл байдлаар */
+.theme-rickmorty body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+  mix-blend-mode: screen;
   background-image:
     radial-gradient(circle at 85% 12%, rgba(151, 206, 76, 0.22) 0, rgba(151, 206, 76, 0.08) 9%, transparent 22%),
     radial-gradient(circle at 10% 88%, rgba(68, 200, 232, 0.14) 0, transparent 26%),
@@ -957,7 +1045,6 @@ button:hover {
     radial-gradient(1px 1px at 40% 85%, rgba(255, 255, 255, 0.4), transparent),
     radial-gradient(1px 1px at 90% 60%, rgba(255, 255, 255, 0.5), transparent);
   background-size: 100% 100%, 100% 100%, 230px 230px, 310px 310px, 270px 270px, 190px 190px, 350px 350px;
-  background-attachment: fixed;
 }
 
 .theme-rickmorty [class*="border-border-subtle"] {
@@ -965,8 +1052,9 @@ button:hover {
 }
 
 /* Портал шиг гэрэлтдэг карт */
-.theme-rickmorty [class*="rounded-2xl"],
-.theme-rickmorty [class*="rounded-3xl"] {
+/* Зөвхөн карт (bg-surface-elevated) — чатын мөр гэх мэт бусад дугуй элементэд биш */
+.theme-rickmorty [class*="bg-surface-elevated"][class*="rounded-2xl"],
+.theme-rickmorty [class*="bg-surface-elevated"][class*="rounded-3xl"] {
   box-shadow: 0 0 0 1px rgba(151, 206, 76, 0.06), 0 0 18px rgba(151, 206, 76, 0.05);
 }
 
