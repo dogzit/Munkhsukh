@@ -844,6 +844,90 @@ button:hover {
   font-family: "Georgia", serif;
 }
 
+/* ── Counter-Strike 2 — бараан ган саарал, T улбар шар, CT цэнхэр ── */
+.theme-cs2 {
+  --color-surface: #0d1014;
+  --color-surface-alt: #161b22;
+  --color-surface-elevated: rgba(222, 155, 53, 0.06);
+  --color-on-surface: #e8e4dc;
+  --color-on-surface-muted: #8b929c;
+  --color-border: rgba(222, 155, 53, 0.28);
+  --color-border-subtle: rgba(93, 121, 174, 0.18);
+  --color-accent: #de9b35;
+  --color-accent-glow: rgba(222, 155, 53, 0.25);
+  --color-card: rgba(222, 155, 53, 0.035);
+  --color-card-hover: rgba(93, 121, 174, 0.1);
+  font-family: "Arial Narrow", "Roboto Condensed", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Газрын зургийн тор + дээд талд улбар шар гэрэл */
+.theme-cs2 {
+  background-color: #0d1014;
+  background-image:
+    radial-gradient(ellipse at 50% -10%, rgba(222, 155, 53, 0.14), transparent 55%),
+    radial-gradient(ellipse at 100% 100%, rgba(93, 121, 174, 0.12), transparent 50%),
+    repeating-linear-gradient(0deg, transparent, transparent 47px, rgba(255, 255, 255, 0.025) 47px, rgba(255, 255, 255, 0.025) 48px),
+    repeating-linear-gradient(90deg, transparent, transparent 47px, rgba(255, 255, 255, 0.025) 47px, rgba(255, 255, 255, 0.025) 48px);
+  background-attachment: fixed;
+}
+
+/* CS2-ийн цэс шиг ирмэг тод, бага дугуйрсан булан */
+.theme-cs2 [class*="rounded-2xl"],
+.theme-cs2 [class*="rounded-3xl"] {
+  border-radius: 6px !important;
+}
+.theme-cs2 [class*="rounded-xl"] {
+  border-radius: 4px !important;
+}
+
+.theme-cs2 [class*="border-border-subtle"] {
+  border-color: rgba(93, 121, 174, 0.2) !important;
+}
+
+/* Карт — зүүн талдаа улбар шар зураас */
+.theme-cs2 [class*="bg-surface-elevated"][class*="rounded"] {
+  box-shadow: inset 2px 0 0 rgba(222, 155, 53, 0.55);
+}
+
+.theme-cs2 [class*="shadow-2xl"],
+.theme-cs2 [class*="shadow-lg"] {
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(222, 155, 53, 0.12) !important;
+}
+
+/* Өнгөт товч, дүрс — T (улбар шар) → CT (цэнхэр) */
+.theme-cs2 [class*="bg-gradient-to-br"] {
+  background-image: linear-gradient(135deg, #de9b35 0%, #b8752a 45%, #5d79ae 100%) !important;
+}
+
+/* Гарчиг (h1) томоор бичвэл утсан дээр тасардаг тул зөвхөн h2 */
+.theme-cs2 h2 {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.theme-cs2 input,
+.theme-cs2 textarea,
+.theme-cs2 select {
+  background-color: rgba(22, 27, 34, 0.9);
+  border-color: rgba(139, 146, 156, 0.3);
+  color: #e8e4dc;
+}
+
+.theme-cs2 input:focus,
+.theme-cs2 textarea:focus {
+  border-color: #de9b35;
+}
+
+.theme-cs2 input::placeholder,
+.theme-cs2 textarea::placeholder {
+  color: #5f6670;
+}
+
+.theme-cs2 ::selection {
+  background: rgba(222, 155, 53, 0.45);
+  color: #0d1014;
+}
+
 /* ── Rick & Morty — сансар, ногоон портал ── */
 .theme-rickmorty {
   /* Бага зэрэг тунгалаг — ард нь од, портал харагдана */

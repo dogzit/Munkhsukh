@@ -12,6 +12,7 @@ export const THEMES = [
   { id: "valorant", label: "Valorant", icon: "🎯", group: "Тоглоом" },
   { id: "roblox", label: "Roblox", icon: "🧱", group: "Тоглоом" },
   { id: "impostor", label: "Among Us", icon: "📮", group: "Тоглоом" },
+  { id: "cs2", label: "Counter-Strike 2", icon: "🔫", group: "Тоглоом" },
   // Аниме
   { id: "arcane", label: "Arcane", icon: "⚗️", group: "Аниме" },
   { id: "jujutsu", label: "Jujutsu Kaisen", icon: "👁️", group: "Аниме" },
