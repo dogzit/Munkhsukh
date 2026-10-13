@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Shuffle, Loader2, Check, Search, RotateCcw, Users, Repeat } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Shuffle, Loader2, Check, Search, RotateCcw, Users, Repeat, Eye, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import AppHeader from "@/app/_components/AppHeader";
 import { BRANCHES } from "@/lib/branches";
 
@@ -39,6 +40,12 @@ function randomIndex(n: number) {
 
 const label = (s: Student) => s.fullName || s.name;
 
+type Person = { name: string; label: string; avatar: string | null };
+type Pick = { id: string; createdAt: string; winner: Person; poolSize: number; poolLabels?: string[] };
+
+// Шинэ сонголт энэ хугацаанаас хуучин бол хөдөлгөөнгүй шууд харуулна
+const ANIMATE_WITHIN_MS = 20_000;
+
 export default function RandomStudentPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,11 +57,62 @@ export default function RandomStudentPage() {
   const [showPicker, setShowPicker] = useState(false);
   const [q, setQ] = useState("");
 
-  const [result, setResult] = useState<Student | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [result, setResult] = useState<Person | null>(null);
   const [rolling, setRolling] = useState<string | null>(null);
   const [spinning, setSpinning] = useState(false);
-  const [history, setHistory] = useState<Student[]>([]);
+  const [sending, setSending] = useState(false);
+  const [history, setHistory] = useState<Pick[]>([]);
   const restored = useRef(false);
+  const lastSeen = useRef<string | null | undefined>(undefined);
+
+  // Нэрс гүйлгээд ялагчийг харуулна (бүх төхөөрөмж дээр ижил)
+  const reveal = useCallback((pick: Pick) => {
+    const names = pick.poolLabels?.length ? pick.poolLabels : [pick.winner.label];
+    setSpinning(true);
+    setResult(null);
+    let i = 0;
+    const steps = 16;
+    const tick = () => {
+      if (i < steps) {
+        setRolling(names[randomIndex(names.length)]);
+        i++;
+        setTimeout(tick, 40 + i * 8);
+      } else {
+        setRolling(null);
+        setResult(pick.winner);
+        setSpinning(false);
+      }
+    };
+    tick();
+  }, []);
+
+  const loadPicks = useCallback(async () => {
+    try {
+      const res = await fetch("/api/random-picks");
+      if (!res.ok) return;
+      const data = (await res.json()) as { isAdmin: boolean; serverNow: number; picks: Pick[] };
+      setIsAdmin(data.isAdmin);
+      setHistory(data.picks);
+      const latest = data.picks[0];
+      if (!latest || latest.id === lastSeen.current) return;
+      const first = lastSeen.current === undefined;
+      lastSeen.current = latest.id;
+      const fresh = data.serverNow - new Date(latest.createdAt).getTime() < ANIMATE_WITHIN_MS;
+      // Хуудас нээгдэх үед хуучин сонголтыг хөдөлгөөнгүй харуулна
+      if (first && !fresh) setResult(latest.winner);
+      else reveal(latest);
+    } catch { /* */ }
+  }, [reveal]);
+
+  useEffect(() => {
+    const t = setTimeout(loadPicks, 0);
+    const id = setInterval(loadPicks, 2000);
+    return () => {
+      clearTimeout(t);
+      clearInterval(id);
+    };
+  }, [loadPicks]);
 
   useEffect(() => {
     fetch("/api/students")
@@ -109,29 +167,32 @@ export default function RandomStudentPage() {
 
   const selectOnly = (names: string[]) => setSelected(new Set(names));
 
-  const pick = () => {
-    if (spinning || remaining.length === 0) return;
-    setSpinning(true);
-    setResult(null);
-    const winner = remaining[randomIndex(remaining.length)];
+  // Админ — сервер сонгоно, бүгдэд нэгэн зэрэг харагдана
+  const pick = async () => {
+    if (spinning || sending || remaining.length === 0) return;
+    setSending(true);
+    try {
+      const res = await fetch("/api/random-picks", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ pool: pool.map((s) => s.name), exclude: noRepeat ? picked : [] }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error);
+      if (noRepeat) setPicked((p) => [...p, data.winner]);
+      await loadPicks();
+    } catch (e) {
+      toast.error((e as Error).message || "Алдаа гарлаа");
+    }
+    setSending(false);
+  };
 
-    // Нэрс гүйлгэх хөдөлгөөн — сонгох боломжтой хүмүүсийн нэрсээр
-    let i = 0;
-    const steps = 16;
-    const tick = () => {
-      if (i < steps) {
-        setRolling(label(remaining[randomIndex(remaining.length)]));
-        i++;
-        setTimeout(tick, 40 + i * 8);
-      } else {
-        setRolling(null);
-        setResult(winner);
-        setHistory((h) => [winner, ...h.slice(0, 9)]);
-        if (noRepeat) setPicked((p) => [...p, winner.name]);
-        setSpinning(false);
-      }
-    };
-    tick();
+  const clearHistory = async () => {
+    if (!confirm("Сонголтын түүхийг бүгдэд нь устгах уу?")) return;
+    await fetch("/api/random-picks", { method: "DELETE" }).catch(() => null);
+    lastSeen.current = null;
+    setHistory([]);
+    setResult(null);
   };
 
   const resetRound = () => {
@@ -139,7 +200,7 @@ export default function RandomStudentPage() {
     setResult(null);
   };
 
-  const shown = rolling ?? (result ? label(result) : null);
+  const shown = rolling ?? result?.label ?? null;
 
   return (
     <div className="min-h-screen bg-surface text-on-surface flex flex-col items-center font-sans">
@@ -153,7 +214,7 @@ export default function RandomStudentPage() {
         <div className="w-full bg-surface-elevated border border-border rounded-3xl p-7 text-center shadow-2xl">
           {result && !rolling && (
             <div className="w-16 h-16 mx-auto mb-3 rounded-full overflow-hidden bg-accent/15 flex items-center justify-center text-accent text-2xl font-black">
-              {result.avatar ? <img src={result.avatar} alt="" className="w-full h-full object-cover" /> : label(result)[0]?.toUpperCase()}
+              {result.avatar ? <img src={result.avatar} alt="" className="w-full h-full object-cover" /> : result.label[0]?.toUpperCase()}
             </div>
           )}
           <div className={`text-3xl font-black mb-2 break-words transition-all duration-150 ${spinning ? "scale-105 opacity-80" : ""}`}>
@@ -164,11 +225,21 @@ export default function RandomStudentPage() {
               ? "Сонгож байна..."
               : result
                 ? "Сонгогдлоо! 🎉"
-                : remaining.length === 0 && noRepeat && pool.length > 0
-                  ? "Бүгд сонгогдсон 👏"
-                  : "Товч дарж сурагч сонгоно уу"}
+                : !isAdmin
+                  ? "Багш/админ сонгоход энд шууд харагдана"
+                  : remaining.length === 0 && noRepeat && pool.length > 0
+                    ? "Бүгд сонгогдсон 👏"
+                    : "Товч дарж сурагч сонгоно уу"}
           </p>
         </div>
+
+        {!isAdmin && (
+          <p className="flex items-center gap-1.5 text-[11px] text-on-surface-muted">
+            <Eye size={12} /> Зөвхөн харах — админ сонгоно
+          </p>
+        )}
+
+        {isAdmin && (<>
 
         {/* Тохиргоо */}
         <div className="w-full grid grid-cols-2 gap-2">
@@ -270,14 +341,14 @@ export default function RandomStudentPage() {
         {/* Сонгох товч */}
         <button
           onClick={pick}
-          disabled={spinning || loading || remaining.length === 0}
+          disabled={spinning || sending || loading || remaining.length === 0}
           className="w-full py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600
             text-white font-black uppercase tracking-wider text-sm
             hover:from-violet-500 hover:to-indigo-500 hover:scale-[1.02] hover:shadow-xl
             active:scale-[0.98] disabled:opacity-60 disabled:hover:scale-100
             transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
         >
-          {spinning ? <Loader2 size={18} className="animate-spin" /> : <Shuffle size={18} />}
+          {spinning || sending ? <Loader2 size={18} className="animate-spin" /> : <Shuffle size={18} />}
           {spinning
             ? "Сонгож байна..."
             : pool.length === 0
@@ -286,16 +357,28 @@ export default function RandomStudentPage() {
                 ? "Бүгд сонгогдсон"
                 : `Санамсаргүй сонгох (${remaining.length})`}
         </button>
+        </>)}
 
         {/* Түүх */}
         {history.length > 0 && (
           <div className="w-full mt-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-muted mb-2">Түүх</p>
+            <div className="flex items-center mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-muted">Түүх</p>
+              {isAdmin && (
+                <button onClick={clearHistory} className="ml-auto flex items-center gap-1 text-[10px] font-bold text-on-surface-muted hover:text-red-400">
+                  <Trash2 size={11} /> Түүх устгах
+                </button>
+              )}
+            </div>
             <div className="space-y-1.5">
-              {history.map((h, i) => (
-                <div key={`${h.name}-${i}`} className="flex items-center gap-2 px-3 py-2 bg-surface-elevated border border-border-subtle rounded-xl text-sm">
+              {/* Одоо гүйлгэж буй сонголтыг ил болохоос нь өмнө түүхэнд харуулахгүй */}
+              {history.slice(spinning ? 1 : 0).map((h, i) => (
+                <div key={h.id} className="flex items-center gap-2 px-3 py-2 bg-surface-elevated border border-border-subtle rounded-xl text-sm">
                   <span className="text-on-surface-muted text-xs w-5">{i + 1}.</span>
-                  <span className="font-semibold truncate">{label(h)}</span>
+                  <span className="font-semibold truncate flex-1">{h.winner.label}</span>
+                  <span className="text-[10px] text-on-surface-muted shrink-0">
+                    {new Date(h.createdAt).toLocaleTimeString("mn-MN", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
                 </div>
               ))}
             </div>

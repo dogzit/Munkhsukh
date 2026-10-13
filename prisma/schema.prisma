@@ -314,3 +314,16 @@ model LeaveRequest {
   @@index([status, createdAt])
   @@index([userName, createdAt])
 }
+
+// --- Сурагч сонгох (админ сонгоно, бусад шууд харна) ---
+model RandomPick {
+  id        String   @id @default(nanoid())
+  // Сонгогдсон хэрэглэгчийн нэр
+  winner    String
+  // Хэнээс сонгосон (хөдөлгөөнд нэрс гүйлгэхэд)
+  pool      String[]
+  createdBy String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
