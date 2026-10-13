@@ -928,6 +928,161 @@ button:hover {
   color: #fff;
 }
 
+/* ── Hunter × Hunter — ногоон Нэн аура, хөзрийн хээ ── */
+.theme-hxh {
+  --color-surface: #07110a;
+  --color-surface-alt: #0e1f13;
+  --color-surface-elevated: rgba(76, 175, 80, 0.07);
+  --color-on-surface: #e8f5e4;
+  --color-on-surface-muted: #8fae92;
+  --color-border: rgba(110, 200, 100, 0.3);
+  --color-border-subtle: rgba(120, 200, 255, 0.14);
+  --color-accent: #5fd35a;
+  --color-accent-glow: rgba(95, 211, 90, 0.3);
+  --color-card: rgba(76, 175, 80, 0.05);
+  --color-card-hover: rgba(120, 200, 255, 0.08);
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+}
+
+/* Нэн аура гэрэл + хөзрийн хээ — хуудасны дээр бүдгээр */
+.theme-hxh body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background-image:
+    radial-gradient(ellipse at 15% 20%, rgba(95, 211, 90, 0.18), transparent 45%),
+    radial-gradient(ellipse at 90% 75%, rgba(120, 200, 255, 0.14), transparent 45%),
+    url("/themes/hxh-suits.svg");
+  background-size: 100% 100%, 100% 100%, 96px 96px;
+}
+
+.theme-hxh [class*="bg-surface-elevated"][class*="rounded"] {
+  box-shadow: 0 0 0 1px rgba(95, 211, 90, 0.08), 0 0 20px rgba(95, 211, 90, 0.06);
+}
+
+.theme-hxh [class*="shadow-2xl"],
+.theme-hxh [class*="shadow-lg"] {
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55), 0 0 24px rgba(95, 211, 90, 0.14) !important;
+}
+
+/* Гон (ногоон) → Киллуа (цахилгаан цэнхэр) */
+.theme-hxh [class*="bg-gradient-to-br"] {
+  background-image: linear-gradient(135deg, #3fae3b 0%, #2a8f6a 50%, #5fb8f0 100%) !important;
+}
+
+.theme-hxh h1,
+.theme-hxh h2 {
+  text-shadow: 0 0 12px rgba(95, 211, 90, 0.35);
+}
+
+.theme-hxh input,
+.theme-hxh textarea,
+.theme-hxh select {
+  background-color: rgba(14, 31, 19, 0.9);
+  border-color: rgba(110, 200, 100, 0.28);
+  color: #e8f5e4;
+}
+
+.theme-hxh input::placeholder,
+.theme-hxh textarea::placeholder {
+  color: #5f7d62;
+}
+
+/* ── JoJo's Bizarre Adventure — нил ягаан, алт, ゴゴゴ ── */
+.theme-jojo {
+  --color-surface: #12061c;
+  --color-surface-alt: #1f0b30;
+  --color-surface-elevated: rgba(170, 70, 220, 0.09);
+  --color-on-surface: #fbefff;
+  --color-on-surface-muted: #b597c9;
+  --color-border: rgba(255, 200, 40, 0.32);
+  --color-border-subtle: rgba(230, 60, 160, 0.18);
+  --color-accent: #ffc928;
+  --color-accent-glow: rgba(255, 201, 40, 0.3);
+  --color-card: rgba(170, 70, 220, 0.06);
+  --color-card-hover: rgba(230, 60, 160, 0.1);
+  font-family: Impact, "Arial Black", "Helvetica Neue", sans-serif;
+  letter-spacing: 0.01em;
+}
+
+/* Энгийн бичвэр уншихад хялбар байхаар — зөвхөн гарчиг Impact */
+.theme-jojo p,
+.theme-jojo span,
+.theme-jojo input,
+.theme-jojo textarea,
+.theme-jojo li {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Хажуу талд том "ゴゴゴ" + ягаан/нил гэрэл */
+.theme-jojo body::after {
+  content: "ゴ\A ゴ\A ゴ";
+  white-space: pre;
+  position: fixed;
+  top: 12%;
+  right: -0.05em;
+  z-index: 25;
+  pointer-events: none;
+  font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+  font-weight: 900;
+  font-size: clamp(64px, 18vw, 140px);
+  line-height: 1.05;
+  color: #e63ca0;
+  opacity: 0.16;
+  transform: rotate(-8deg);
+  mix-blend-mode: screen;
+}
+
+.theme-jojo body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background-image:
+    radial-gradient(ellipse at 0% 0%, rgba(170, 70, 220, 0.25), transparent 50%),
+    radial-gradient(ellipse at 100% 100%, rgba(230, 60, 160, 0.16), transparent 50%),
+    repeating-linear-gradient(115deg, transparent 0 18px, rgba(255, 201, 40, 0.025) 18px 20px);
+}
+
+.theme-jojo [class*="bg-surface-elevated"][class*="rounded"] {
+  box-shadow: 3px 3px 0 rgba(230, 60, 160, 0.35), 0 0 0 1px rgba(255, 201, 40, 0.12);
+}
+
+.theme-jojo [class*="shadow-2xl"],
+.theme-jojo [class*="shadow-lg"] {
+  box-shadow: 4px 4px 0 rgba(255, 201, 40, 0.35), 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Алт → ягаан → нил */
+.theme-jojo [class*="bg-gradient-to-br"] {
+  background-image: linear-gradient(135deg, #ffc928 0%, #e63ca0 50%, #7b2fbe 100%) !important;
+}
+
+.theme-jojo h1,
+.theme-jojo h2 {
+  color: #ffd84a;
+  text-shadow: 1px 1px 0 rgba(123, 47, 190, 0.8);
+  letter-spacing: 0.03em;
+}
+
+.theme-jojo input,
+.theme-jojo textarea,
+.theme-jojo select {
+  background-color: rgba(31, 11, 48, 0.9);
+  border-color: rgba(255, 201, 40, 0.3);
+  color: #fbefff;
+}
+
+.theme-jojo input::placeholder,
+.theme-jojo textarea::placeholder {
+  color: #7d6290;
+}
+
 /* ── Counter-Strike 2 — бараан ган саарал, T улбар шар, CT цэнхэр ── */
 .theme-cs2 {
   --color-surface: #0d1014;

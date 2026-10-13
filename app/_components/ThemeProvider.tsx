@@ -21,6 +21,8 @@ export const THEMES = [
   { id: "naruto", label: "Naruto", icon: "🍥", group: "Аниме" },
   { id: "ghibli", label: "Ghibli", icon: "🌿", group: "Аниме" },
   { id: "codegeass", label: "Code Geass", icon: "♟️", group: "Аниме" },
+  { id: "hxh", label: "Hunter × Hunter", icon: "🃏", group: "Аниме" },
+  { id: "jojo", label: "JoJo's Bizarre Adventure", icon: "⭐", group: "Аниме" },
   // K-Pop
   { id: "blackpink", label: "Blackpink", icon: "🖤", group: "K-Pop" },
   { id: "borahae", label: "BTS", icon: "💜", group: "K-Pop" },

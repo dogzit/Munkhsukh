@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+  <!-- Хөзрийн дүрс (♠♥♦♣) — бүдэг давталттай хээ -->
+  <g opacity="0.07">
+    <!-- spade -->
+    <path fill="#7ddc6b" d="M40 18 C52 32 62 38 62 50 C62 58 55 63 48 60 C46 59 44 57 43 55 L46 68 L34 68 L37 55 C36 57 34 59 32 60 C25 63 18 58 18 50 C18 38 28 32 40 18 Z"/>
+    <!-- heart -->
+    <path fill="#e8476a" d="M120 30 C120 22 131 18 136 26 C141 18 152 22 152 30 C152 42 136 50 136 58 C136 50 120 42 120 30 Z" transform="translate(-16 -4)"/>
+    <!-- diamond -->
+    <path fill="#e8476a" d="M40 96 L56 116 L40 136 L24 116 Z"/>
+    <!-- club -->
+    <g fill="#7ddc6b" transform="translate(120 116)">
+      <circle cx="0" cy="-10" r="9"/><circle cx="-10" cy="4" r="9"/><circle cx="10" cy="4" r="9"/>
+      <path d="M-3 4 L3 4 L6 20 L-6 20 Z"/>
+    </g>
+  </g>
+</svg>
