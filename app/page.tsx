@@ -4,6 +4,7 @@ import { BookOpen, Clock, ArrowRight, MessageCircle, Newspaper, Users, Crown, Gr
 import { useMyRoles } from "./_components/useMyRoles";
 import { useEffect, useState } from "react";
 import BusSeatPanel from "./_components/BusSeatPanel";
+import { gamesClosedUntil } from "@/lib/games";
 import AppHeader from "./_components/AppHeader";
 
 const MON_DAYS = ["Ням", "Даваа", "Мягмар", "Лхагва", "Пүрэв", "Баасан", "Бямба"];
@@ -40,6 +41,7 @@ export default function HomePage() {
   const greeting = now
     ? getGreeting(now.getHours())
     : { text: "Сайн уу", emoji: "🎓", gradient: "from-violet-500 to-cyan-500" };
+  const gameClosed = now ? gamesClosedUntil(now.getTime()) !== null : false;
   const dateStr = now ? `${MON_DAYS[now.getDay()]}, ${now.getMonth() + 1}/${now.getDate()}` : "";
   const timeStr = now
     ? `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
@@ -203,7 +205,9 @@ export default function HomePage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-black text-sm">2048 тоглоом</p>
-              <p className="text-[10px] text-on-surface-muted">Шинэковоос Ариун цэвэр дарга хүртэл 🏆</p>
+              <p className="text-[10px] text-on-surface-muted">
+                {gameClosed ? "🔒 Түр хаалттай" : "Шинэковоос Ариун цэвэр дарга хүртэл 🏆"}
+              </p>
             </div>
             {/* Жижиг хавтангууд */}
             <div className="hidden min-[360px]:grid grid-cols-2 gap-0.5 shrink-0">

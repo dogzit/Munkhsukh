@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { getMyRoles } from "@/lib/roles";
-import { canPlayGames } from "@/lib/games";
+import { canPlayGames, gamesClosedUntil } from "@/lib/games";
 import { NextResponse } from "next/server";
 
 const GAME = "2048";
@@ -52,6 +52,9 @@ export async function POST(req: Request) {
     const me = await getMyRoles(req);
     if (!canPlayGames(me?.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    if (gamesClosedUntil() && me?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Админы зүгээс хаасан байна" }, { status: 403 });
     }
     const userName = req.headers.get("x-user-name") ?? "";
 

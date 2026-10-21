@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Gamepad2, RotateCcw, Trophy, Crown, Loader2 } from "lucide-react";
+import { Gamepad2, RotateCcw, Trophy, Crown, Loader2, Lock } from "lucide-react";
 import AppHeader from "@/app/_components/AppHeader";
 import { useMyRoles } from "@/app/_components/useMyRoles";
-import { canPlayGames } from "@/lib/games";
+import { canPlayGames, gamesClosedUntil } from "@/lib/games";
 
 type Tile = {
   id: number;
@@ -188,6 +188,15 @@ export default function Game2048Page() {
   const router = useRouter();
   const { roles } = useMyRoles();
   const allowed = canPlayGames(roles?.role);
+  const isAdmin = roles?.role === "ADMIN";
+  // Админ түр хаасан эсэх — цаг болоход өөрөө нээгдэнэ
+  const [closedUntil, setClosedUntil] = useState<number | null>(() => gamesClosedUntil());
+  useEffect(() => {
+    if (!closedUntil) return;
+    const id = setInterval(() => setClosedUntil(gamesClosedUntil()), 1000);
+    return () => clearInterval(id);
+  }, [closedUntil]);
+  const locked = !!closedUntil && !isAdmin;
 
   const [tiles, setTiles] = useState<Tile[]>([]);
   const [score, setScore] = useState(0);
@@ -278,7 +287,7 @@ export default function Game2048Page() {
 
   const doMove = useCallback(
     (dir: Dir) => {
-      if (over || showWin) return;
+      if (over || showWin || locked) return;
       const res = move(tiles, dir);
       if (!res.moved) return;
       const next = addRandom(res.tiles);
@@ -292,7 +301,7 @@ export default function Game2048Page() {
       }
       if (!canMove(next)) setOver(true);
     },
-    [tiles, score, over, showWin, won],
+    [tiles, score, over, showWin, won, locked],
   );
 
   useEffect(() => {
@@ -337,6 +346,42 @@ export default function Game2048Page() {
 
   if (!roles || !allowed) return <div className="min-h-screen bg-surface" />;
 
+  if (locked && closedUntil) {
+    const left = Math.max(0, closedUntil - Date.now());
+    const h = Math.floor(left / 3_600_000);
+    const m = Math.floor((left % 3_600_000) / 60_000);
+    const s = Math.floor((left % 60_000) / 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const at = new Date(closedUntil).toLocaleString("mn-MN", {
+      timeZone: "Asia/Ulaanbaatar",
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    return (
+      <div className="min-h-screen bg-surface text-on-surface font-sans">
+        <AppHeader title="2048" subtitle="Түр хаалттай" />
+        <div className="px-4 py-10 flex justify-center">
+          <div className="w-full max-w-sm bg-surface-elevated border border-border rounded-3xl p-6 text-center shadow-2xl">
+            <span className="mx-auto w-14 h-14 rounded-2xl bg-amber-500/15 flex items-center justify-center mb-4">
+              <Lock size={26} className="text-amber-400" />
+            </span>
+            <p className="text-lg font-black">Админы зүгээс хаасан байна</p>
+            <p className="text-sm text-on-surface-muted mt-1">
+              Тоглоом <b className="text-on-surface">{at}</b>-д дахин нээгдэнэ
+            </p>
+            <p className="mt-5 text-3xl font-black tabular-nums tracking-tight text-amber-400">
+              {pad(h)}:{pad(m)}:{pad(s)}
+            </p>
+            <p className="text-[10px] uppercase tracking-widest text-on-surface-muted mt-1">үлдсэн хугацаа</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Нүдний байрлал: 4 нүд + 5 завсар (завсар = 2.5%)
   const GAP = 2.5;
   const CELL = (100 - GAP * (SIZE + 1)) / SIZE;
@@ -365,6 +410,11 @@ export default function Game2048Page() {
         <div className="max-w-md lg:max-w-4xl mx-auto lg:flex lg:items-start lg:gap-6">
           {/* Тоглоом */}
           <div className="w-full max-w-md mx-auto lg:mx-0 lg:flex-1">
+            {closedUntil && isAdmin && (
+              <p className="mb-3 flex items-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-bold text-amber-400">
+                <Lock size={13} /> Бусдад хаалттай байна — зөвхөн админ тоглож байна
+              </p>
+            )}
             <div className="flex items-stretch gap-2 mb-3">
               <div className="flex-1 bg-surface-elevated border border-border rounded-2xl px-3 py-2">
                 <p className="text-[10px] uppercase tracking-widest text-on-surface-muted font-semibold">Оноо</p>
