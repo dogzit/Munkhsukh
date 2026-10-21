@@ -1,6 +1,6 @@
-// Ангийн цэвэрлэгээний жижүүр — туршилтын үед зөвхөн админд (true бол бүгдэд).
+// Ангийн цэвэрлэгээний жижүүр — бүх хэрэглэгчид нээлттэй (false бол зөвхөн админ).
 // false үед хүүхдүүдэд мэдэгдэл ч явахгүй.
-export const CLEANING_PUBLIC = false;
+export const CLEANING_PUBLIC = true;
 
 export const DEFAULT_GROUPS = 8;
 export const MAX_GROUPS = 15;
