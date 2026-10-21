@@ -327,3 +327,16 @@ model RandomPick {
 
   @@index([createdAt])
 }
+
+// --- Жижиг тоглоомын хамгийн сайн оноо (хүн бүрт тоглоом тус бүрт нэг мөр) ---
+model GameScore {
+  id        String   @id @default(nanoid())
+  game      String
+  userName  String
+  best      Int
+  bestTile  Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([game, userName])
+  @@index([game, best])
+}

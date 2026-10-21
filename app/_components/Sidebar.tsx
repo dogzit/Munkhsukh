@@ -5,7 +5,9 @@ import { useRouter, usePathname } from "next/navigation";
 import LogoutConfirm from "./LogoutConfirm";
 import { useMyRoles } from "./useMyRoles";
 import { canUseLeave } from "@/lib/leave";
+import { canPlayGames } from "@/lib/games";
 import {
+  Gamepad2,
   Home,
   BookOpen,
   Clock,
@@ -138,6 +140,9 @@ export default function Sidebar() {
             : []),
           ...(canUseLeave(roles?.role)
             ? [{ icon: <CalendarOff size={20} />, label: "Чөлөө авах", href: "/leave" }]
+            : []),
+          ...(canPlayGames(roles?.role)
+            ? [{ icon: <Gamepad2 size={20} />, label: "2048", href: "/game2048" }]
             : []),
         ].map((item) => {
           const active = isActive(pathname, item.href);
