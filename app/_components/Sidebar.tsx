@@ -52,7 +52,7 @@ function isActive(pathname: string, href: string) {
 }
 
 export default function Sidebar() {
-  const { isLeader, roles } = useMyRoles();
+  const { isLeader, isHomeworkPoster, roles } = useMyRoles();
   const router = useRouter();
   const pathname = usePathname();
   const [showLogout, setShowLogout] = useState(false);
@@ -133,7 +133,7 @@ export default function Sidebar() {
       <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto overflow-x-hidden">
         {[
           ...navItems,
-          ...(isLeader
+          ...(isLeader || isHomeworkPoster
             ? [{ icon: <Crown size={20} />, label: "Даалгавар удирдах", href: "/manage/homework" }]
             : []),
           ...(canUseLeave(roles?.role)

@@ -60,7 +60,7 @@ export default function MobileNav() {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const { isAdmin, isLeader, roles } = useMyRoles();
+  const { isAdmin, isLeader, isHomeworkPoster, roles } = useMyRoles();
 
   // Хуудас солигдоход цэсийг хаана (render үед state тохируулах)
   const [lastPath, setLastPath] = useState(pathname);
@@ -70,7 +70,7 @@ export default function MobileNav() {
   }
 
   const extraItems: (NavItem & { color: string })[] = [
-    ...(isLeader
+    ...(isLeader || isHomeworkPoster
       ? [{ icon: Crown, label: "Даалгавар удирдах", href: "/manage/homework", color: "from-violet-600 to-indigo-500" }]
       : []),
     ...(canUseLeave(roles?.role)

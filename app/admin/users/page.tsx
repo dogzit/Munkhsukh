@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   ArrowLeft,
+  NotebookPen,
   Shield,
   ShieldCheck,
   User as UserIcon,
@@ -66,6 +67,7 @@ export default function AdminUsersPage() {
     USER: "Хэрэглэгч",
     LEADER: "Ангийн дарга",
     TEACHER: "Ангийн багш",
+    HOMEWORK: "Даалгавар тавигч",
     ADMIN: "Админ",
   };
 
@@ -98,6 +100,8 @@ export default function AdminUsersPage() {
       setToggling(null);
     }
   };
+
+  const homeworkCount = users.filter((x) => x.role === "HOMEWORK").length;
 
   const setRole = (u: AdminUser, role: string) =>
     patchUser(u, { role }, `${u.fullName || u.name} → ${ROLE_LABEL[role]}`);
@@ -362,9 +366,9 @@ export default function AdminUsersPage() {
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
                     <div className="flex items-center gap-1.5">
                       {busy && <Loader2 size={12} className="animate-spin text-on-surface-muted" />}
-                      {isAdmin ? <Shield size={12} className="text-amber-400" /> : u.role === "LEADER" ? <Crown size={12} className="text-violet-400" /> : u.role === "TEACHER" ? <GraduationCap size={12} className="text-emerald-400" /> : <UserIcon size={12} className="text-on-surface-muted" />}
+                      {isAdmin ? <Shield size={12} className="text-amber-400" /> : u.role === "LEADER" ? <Crown size={12} className="text-violet-400" /> : u.role === "TEACHER" ? <GraduationCap size={12} className="text-emerald-400" /> : u.role === "HOMEWORK" ? <NotebookPen size={12} className="text-pink-400" /> : <UserIcon size={12} className="text-on-surface-muted" />}
                       <select
-                        value={["ADMIN", "LEADER", "TEACHER"].includes(u.role) ? u.role : "USER"}
+                        value={["ADMIN", "LEADER", "TEACHER", "HOMEWORK"].includes(u.role) ? u.role : "USER"}
                         onChange={(e) => setRole(u, e.target.value)}
                         disabled={busy || isMe}
                         aria-label="Эрх"
@@ -372,6 +376,9 @@ export default function AdminUsersPage() {
                         className="bg-surface-alt border border-border rounded-lg px-2 py-1.5 text-xs font-bold text-on-surface outline-none disabled:opacity-50"
                       >
                         <option value="USER">Хэрэглэгч</option>
+                        <option value="HOMEWORK" disabled={u.role !== "HOMEWORK" && homeworkCount >= 3}>
+                          Даалгавар тавигч ({homeworkCount}/3)
+                        </option>
                         <option value="LEADER">Ангийн дарга</option>
                         <option value="TEACHER">Ангийн багш</option>
                         <option value="ADMIN">Админ</option>

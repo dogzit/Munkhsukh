@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 
 export type MyRoles = {
-  role: string; // USER | LEADER | TEACHER | ADMIN
+  role: string; // USER | HOMEWORK | LEADER | TEACHER | ADMIN
   branch: number | null;
   branchLeader: boolean;
 };
@@ -38,4 +38,13 @@ export async function canManageClass(req: Request) {
 export async function canPostTeacherNews(req: Request) {
   const r = await getMyRoles(req);
   return r?.role === "ADMIN" || r?.role === "TEACHER";
+}
+
+/** Даалгавар тавигч хүүхдийн дээд тоо */
+export const MAX_HOMEWORK_POSTERS = 3;
+
+/** Админ, ангийн дарга эсвэл даалгавар тавигч — даалгавар нэмэх/засах/устгах */
+export async function canManageHomework(req: Request) {
+  const r = await getMyRoles(req);
+  return r?.role === "ADMIN" || r?.role === "LEADER" || r?.role === "HOMEWORK";
 }

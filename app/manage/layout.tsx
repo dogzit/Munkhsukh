@@ -4,10 +4,10 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMyRoles } from "@/app/_components/useMyRoles";
 
-/** Ангийн дарга (болон админ) — админ панелгүйгээр даалгавар удирдах */
+/** Ангийн дарга, даалгавар тавигч (болон админ) — админ панелгүйгээр даалгавар удирдах */
 export default function ManageLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { roles, canManage } = useMyRoles();
+  const { roles, canManageHomework: canManage } = useMyRoles();
 
   useEffect(() => {
     if (roles && !canManage) router.replace("/");

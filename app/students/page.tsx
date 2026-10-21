@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ChevronRight, Crown, Star, Shield, GraduationCap } from "lucide-react";
+import { Search, ChevronRight, Crown, Star, Shield, GraduationCap, NotebookPen } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
 import AppHeader from "@/app/_components/AppHeader";
 import { BRANCHES, branchName } from "@/lib/branches";
@@ -118,6 +118,7 @@ export default function StudentsPage() {
                     {s.role === "ADMIN" && <Shield size={12} className="text-amber-400 shrink-0" />}
                     {s.role === "LEADER" && <Crown size={12} className="text-violet-400 shrink-0" />}
                     {s.role === "TEACHER" && <GraduationCap size={12} className="text-emerald-400 shrink-0" />}
+                    {s.role === "HOMEWORK" && <NotebookPen size={12} className="text-pink-400 shrink-0" />}
                     {s.branchLeader && <Star size={11} className="text-sky-400 fill-sky-400 shrink-0" />}
                   </p>
                   <p className="text-[10px] text-on-surface-muted truncate">

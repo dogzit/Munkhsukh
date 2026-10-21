@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { isAdmin } from "@/lib/roles";
+import { isAdmin, MAX_HOMEWORK_POSTERS } from "@/lib/roles";
 import { NextRequest, NextResponse } from "next/server";
 
 type ApiError = { error: string };
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
 
 /**
  * PATCH /api/admin/users
- * Body: { name: string, role?: "ADMIN" | "LEADER" | "TEACHER" | "USER", branchLeader?: boolean }
+ * Body: { name: string, role?: "ADMIN" | "LEADER" | "TEACHER" | "HOMEWORK" | "USER", branchLeader?: boolean }
  * Хэрэглэгчийн эрх (админ / ангийн дарга / хэрэглэгч) болон салааны
  * даргын эрхийг өөрчлөх (өөрийн админ эрхийг хасахгүй)
  */
@@ -73,9 +73,9 @@ export async function PATCH(req: NextRequest) {
         status: 400,
       });
     }
-    if (role !== undefined && role !== "ADMIN" && role !== "LEADER" && role !== "TEACHER" && role !== "USER") {
+    if (role !== undefined && role !== "ADMIN" && role !== "LEADER" && role !== "TEACHER" && role !== "HOMEWORK" && role !== "USER") {
       return NextResponse.json(
-        { error: "role must be ADMIN, LEADER, TEACHER or USER" } satisfies ApiError,
+        { error: "role must be ADMIN, LEADER, TEACHER, HOMEWORK or USER" } satisfies ApiError,
         { status: 400 },
       );
     }
@@ -106,6 +106,19 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Not found" } satisfies ApiError, {
         status: 404,
       });
+    }
+
+    // Даалгавар тавигч хүүхэд дээд тал нь 3
+    if (role === "HOMEWORK" && user.role !== "HOMEWORK") {
+      const count = await prisma.user.count({ where: { role: "HOMEWORK" } });
+      if (count >= MAX_HOMEWORK_POSTERS) {
+        return NextResponse.json(
+          {
+            error: `Даалгавар тавигч дээд тал нь ${MAX_HOMEWORK_POSTERS} хүн байна. Эхлээд нэгнийх нь эрхийг хасна уу`,
+          } satisfies ApiError,
+          { status: 400 },
+        );
+      }
     }
 
     if (branchLeader === true && user.branch === null) {

@@ -22,12 +22,15 @@ export function useMyRoles() {
   const isAdmin = roles?.role === "ADMIN";
   const isLeader = roles?.role === "LEADER";
   const isTeacher = roles?.role === "TEACHER";
+  const isHomeworkPoster = roles?.role === "HOMEWORK";
   return {
     roles,
     isAdmin,
     isLeader,
     isTeacher,
+    isHomeworkPoster,
     canManage: isAdmin || isLeader,
+    canManageHomework: isAdmin || isLeader || isHomeworkPoster,
     canPostTeacherNews: isAdmin || isTeacher,
   };
 }

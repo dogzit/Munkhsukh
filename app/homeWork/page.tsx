@@ -10,7 +10,10 @@ import {
   ChevronRight,
   Loader2,
   AlertCircle,
+  CalendarDays,
+  X,
 } from "lucide-react";
+import HomeworkCalendar from "@/app/_components/HomeworkCalendar";
 import Skeleton from "@/app/_components/Skeleton";
 import AppHeader from "@/app/_components/AppHeader";
 
@@ -153,6 +156,8 @@ export default function HomeworkTimelinePage() {
   const [refreshing, setRefreshing] = useState(false);
   const [subjectFilter, setSubjectFilter] = useState("ALL");
   const [weekOffset, setWeekOffset] = useState(0);
+  // Хуанлиас сонгосон өдөр — сонгосон үед долоо хоногийн оронд тэр өдрийг харуулна
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const subjects = useMemo(() => {
     const s = new Set<string>();
@@ -165,14 +170,28 @@ export default function HomeworkTimelinePage() {
     ];
   }, [data]);
 
+  const bySubject = useMemo(
+    () => data.filter((x) => subjectFilter === "ALL" || x.subject === subjectFilter),
+    [data, subjectFilter],
+  );
+
+  const dayCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const x of bySubject) {
+      const k = ymd(x.date);
+      c[k] = (c[k] ?? 0) + 1;
+    }
+    return c;
+  }, [bySubject]);
+
   const filtered = useMemo(() => {
+    if (selectedDate) return bySubject.filter((x) => ymd(x.date) === selectedDate);
     const { start, end } = getWeekRange(weekOffset);
-    return data.filter((x) => {
-      if (subjectFilter !== "ALL" && x.subject !== subjectFilter) return false;
+    return bySubject.filter((x) => {
       const d = new Date(x.date);
       return d >= start && d <= end;
     });
-  }, [data, subjectFilter, weekOffset]);
+  }, [bySubject, weekOffset, selectedDate]);
 
   const groupedByDate = useMemo(() => {
     const groups: Record<string, HworkItem[]> = {};
@@ -242,7 +261,17 @@ export default function HomeworkTimelinePage() {
         />
       </div>
 
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl lg:max-w-5xl mx-auto lg:flex lg:items-start lg:gap-6">
+        {/* Хуанли — утсан дээр дээд талд, том дэлгэцэнд баруун талд */}
+        <aside className="mb-4 sm:mb-6 lg:mb-0 lg:order-2 lg:w-80 lg:shrink-0 lg:sticky lg:top-20">
+          <HomeworkCalendar
+            counts={dayCounts}
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+          />
+        </aside>
+
+      <div className="flex-1 min-w-0 lg:order-1">
         {/* Filter + Refresh */}
         <div className="bg-surface-elevated border border-border backdrop-blur-xl rounded-3xl p-3.5 sm:p-4 mb-4 sm:mb-6 shadow-2xl">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -297,7 +326,31 @@ export default function HomeworkTimelinePage() {
           </div>
         </div>
 
-        {/* Week Navigation */}
+        {/* Сонгосон өдөр */}
+        {selectedDate ? (
+          <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6 bg-surface-elevated border border-pink-500/30 backdrop-blur-xl rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center shrink-0">
+                <CalendarDays size={15} className="text-pink-400" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-on-surface truncate">
+                  {formatDateDisplay(selectedDate)}
+                </p>
+                <p className="text-[10px] text-gray-500">
+                  {getDayOfWeek(selectedDate)} гараг • {filtered.length} даалгавар
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setSelectedDate(null)}
+              className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold text-on-surface-muted border border-border rounded-lg hover:bg-card-hover shrink-0"
+            >
+              <X size={12} /> Долоо хоног руу
+            </button>
+          </div>
+        ) : (
+        /* Week Navigation */
         <div className="flex items-center justify-between mb-4 sm:mb-6 bg-surface-elevated border border-border backdrop-blur-xl rounded-2xl px-2 sm:px-4 py-2 sm:py-3">
           <button
             onClick={() => setWeekOffset((w) => w - 1)}
@@ -335,6 +388,8 @@ export default function HomeworkTimelinePage() {
           </div>
         </div>
 
+        )}
+
         {/* Timeline */}
         {loading ? (
           <div className="space-y-3 stagger-in">
@@ -357,7 +412,9 @@ export default function HomeworkTimelinePage() {
             <div className="text-5xl mb-4 opacity-30">📭</div>
             <p className="text-gray-500">Даалгавар олдсонгүй</p>
             <p className="text-gray-600 text-sm mt-1">
-              Сонгосон хичээлд даалгавар байхгүй байна
+              {selectedDate
+                ? "Энэ өдөр даалгавар өгөөгүй байна"
+                : "Сонгосон хичээлд даалгавар байхгүй байна"}
             </p>
           </div>
         ) : (
@@ -475,6 +532,7 @@ export default function HomeworkTimelinePage() {
             })}
           </div>
         )}
+      </div>
       </div>
       </div>
     </div>

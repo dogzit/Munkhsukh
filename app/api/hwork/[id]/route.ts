@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { canManageClass } from "@/lib/roles";
+import { canManageHomework } from "@/lib/roles";
 import { NextResponse } from "next/server";
 import { isNonEmptyString } from "@/lib/validation";
 
@@ -37,9 +37,9 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
-    if (!(await canManageClass(req))) {
+    if (!(await canManageHomework(req))) {
       return NextResponse.json(
-        { error: "Зөвхөн админ эсвэл ангийн дарга" } satisfies ApiError,
+        { error: "Зөвхөн админ, ангийн дарга эсвэл даалгавар тавигч" } satisfies ApiError,
         { status: 403 },
       );
     }
@@ -124,9 +124,9 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
-    if (!(await canManageClass(req))) {
+    if (!(await canManageHomework(req))) {
       return NextResponse.json(
-        { error: "Зөвхөн админ эсвэл ангийн дарга" } satisfies ApiError,
+        { error: "Зөвхөн админ, ангийн дарга эсвэл даалгавар тавигч" } satisfies ApiError,
         { status: 403 },
       );
     }
