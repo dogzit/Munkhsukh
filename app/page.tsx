@@ -207,7 +207,7 @@ export default function HomePage() {
             </div>
             {/* Жижиг хавтангууд */}
             <div className="hidden min-[360px]:grid grid-cols-2 gap-0.5 shrink-0">
-              {["#f5f5f4", "#fde047", "#4ade80", "#38bdf8"].map((c) => (
+              {["#fb923c", "#fde047", "#4ade80", "#38bdf8"].map((c) => (
                 <span key={c} className="w-3.5 h-3.5 rounded-[4px]" style={{ background: c }} />
               ))}
             </div>
