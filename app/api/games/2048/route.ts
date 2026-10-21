@@ -38,6 +38,7 @@ export async function GET(req: Request) {
         bestTile: t.bestTile,
       })),
       myBest: mine?.best ?? 0,
+      myBestTile: mine?.bestTile ?? 0,
     });
   } catch (e) {
     console.error(e);
@@ -66,14 +67,18 @@ export async function POST(req: Request) {
     const prev = await prisma.gameScore.findUnique({
       where: { game_userName: { game: GAME, userName } },
     });
-    if (prev && prev.best >= score) {
+    // Оноо эсвэл хамгийн том хавтан ахисан үед л шинэчилнэ
+    if (prev && prev.best >= score && prev.bestTile >= bestTile) {
       return NextResponse.json({ best: prev.best, updated: false });
     }
 
     const saved = await prisma.gameScore.upsert({
       where: { game_userName: { game: GAME, userName } },
       create: { game: GAME, userName, best: score, bestTile },
-      update: { best: score, bestTile: Math.max(bestTile, prev?.bestTile ?? 0) },
+      update: {
+        best: Math.max(score, prev?.best ?? 0),
+        bestTile: Math.max(bestTile, prev?.bestTile ?? 0),
+      },
     });
     return NextResponse.json({ best: saved.best, updated: true });
   } catch (e) {

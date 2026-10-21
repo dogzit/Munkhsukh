@@ -125,7 +125,27 @@ function loadSaved(): Saved | null {
   }
 }
 
-/** Бага тоо бараан, том тоо тод; 2048-аас дээш алтан */
+/** Хавтан бүрийн цол — рекордыг тооны оронд цолоор харуулна */
+const TITLES: Record<number, string> = {
+  2: "Шинэков",
+  4: "Сурагч",
+  8: "Хичээнгүй сурагч",
+  16: "Онц сурагч",
+  32: "Салааны дарга",
+  64: "Ангийн дарга",
+  128: "Олимпиадч",
+  256: "Медальт",
+  512: "Суут ухаантан",
+  1024: "Профессор",
+  2048: "Аварга",
+};
+
+function titleOf(v: number) {
+  if (v <= 0) return "—";
+  return TITLES[v] ?? (v > GOLD ? "Ариун цэвэр дарга" : "Шинэков");
+}
+
+/** Дунд зэргийн өнгөнөөс эхэлж тодорно; 2048-аас дээш алтан */
 function tileStyle(v: number): React.CSSProperties {
   if (v >= GOLD) {
     return {
@@ -136,12 +156,13 @@ function tileStyle(v: number): React.CSSProperties {
   }
   const level = Math.log2(v); // 1 (2) … 10 (1024)
   const t = (level - 1) / 9; // 0 … 1
-  const mix = Math.round(14 + t * 76); // 14% … 90% accent
-  const light = Math.round(t * 22); // сүүлийн шатуудад цагаан холино
+  const mix = Math.round(45 + t * 55); // 45% … 100% accent
+  const light = Math.round(t * 32); // том тоонд цагаан холиж гэрэлтүүлнэ
   return {
-    background: `color-mix(in oklab, color-mix(in oklab, var(--color-accent) ${mix}%, #0c0c14) ${100 - light}%, white)`,
-    color: t > 0.45 ? "#ffffff" : "color-mix(in oklab, var(--color-accent) 55%, #e5e7eb)",
-    boxShadow: t > 0.5 ? `0 0 ${Math.round(t * 16)}px color-mix(in oklab, var(--color-accent) 55%, transparent)` : undefined,
+    background: `color-mix(in oklab, color-mix(in oklab, var(--color-accent) ${mix}%, #1a1a26) ${100 - light}%, white)`,
+    color: "#ffffff",
+    textShadow: "0 1px 2px rgba(0,0,0,0.35)",
+    boxShadow: `0 0 ${Math.round(4 + t * 18)}px color-mix(in oklab, var(--color-accent) ${Math.round(25 + t * 45)}%, transparent)`,
   };
 }
 
@@ -161,10 +182,12 @@ export default function Game2048Page() {
   const [showWin, setShowWin] = useState(false);
   const [over, setOver] = useState(false);
   const [myBest, setMyBest] = useState(0);
+  const [myBestTile, setMyBestTile] = useState(0);
   const [top, setTop] = useState<TopRow[] | null>(null);
   const [me, setMe] = useState("");
   const touch = useRef<{ x: number; y: number } | null>(null);
   const submitted = useRef(0);
+  const submittedTile = useRef(0);
 
   useEffect(() => {
     if (roles && !allowed) router.replace("/");
@@ -199,10 +222,12 @@ export default function Game2048Page() {
     try {
       const res = await fetch("/api/games/2048", { cache: "no-store" });
       if (!res.ok) return;
-      const d = (await res.json()) as { top: TopRow[]; myBest: number };
+      const d = (await res.json()) as { top: TopRow[]; myBest: number; myBestTile: number };
       setTop(d.top);
       setMyBest((b) => Math.max(b, d.myBest));
       submitted.current = Math.max(submitted.current, d.myBest);
+      setMyBestTile((b) => Math.max(b, d.myBestTile ?? 0));
+      submittedTile.current = Math.max(submittedTile.current, d.myBestTile ?? 0);
     } catch { /* */ }
   }, []);
 
@@ -211,13 +236,16 @@ export default function Game2048Page() {
   }, [allowed, loadTop]);
 
   const maxTile = tiles.reduce((m, t) => (t.gone ? m : Math.max(m, t.v)), 0);
+  const recordTile = Math.max(myBestTile, maxTile);
 
   // Рекорд ахивал хэсэг хугацааны дараа (эсвэл тоглоом дуусахад шууд) хадгална
   useEffect(() => {
-    if (!allowed || score <= submitted.current) return;
+    const better = () => score > submitted.current || maxTile > submittedTile.current;
+    if (!allowed || !better()) return;
     const send = async () => {
-      if (score <= submitted.current) return;
-      submitted.current = score;
+      if (!better()) return;
+      submitted.current = Math.max(submitted.current, score);
+      submittedTile.current = Math.max(submittedTile.current, maxTile);
       try {
         await fetch("/api/games/2048", {
           method: "POST",
@@ -331,7 +359,8 @@ export default function Game2048Page() {
               </div>
               <div className="flex-1 bg-surface-elevated border border-border rounded-2xl px-3 py-2">
                 <p className="text-[10px] uppercase tracking-widest text-on-surface-muted font-semibold">Миний рекорд</p>
-                <p className="text-xl font-black tabular-nums text-amber-400">{myBest}</p>
+                <p className="text-base sm:text-lg font-black text-amber-400 truncate leading-7">{titleOf(recordTile)}</p>
+                <p className="text-[10px] text-on-surface-muted tabular-nums">{myBest} оноо</p>
               </div>
               <button
                 onClick={restart}
@@ -381,6 +410,9 @@ export default function Game2048Page() {
                     className={`relative w-full h-full rounded-xl ${t.isNew ? "tile-new" : ""} ${t.merged ? "tile-merged" : ""}`}
                     style={tileStyle(t.v)}
                   >
+                    <span className="absolute left-1.5 top-1 sm:left-2 sm:top-1.5 right-1.5 text-[8px] sm:text-[10px] font-bold leading-[1.15] opacity-85 line-clamp-2">
+                      {titleOf(t.v)}
+                    </span>
                     <span className={`absolute right-1.5 bottom-1 sm:right-2 sm:bottom-1.5 font-black tabular-nums leading-none ${numberSize(t.v)}`}>
                       {t.v}
                     </span>
@@ -419,8 +451,36 @@ export default function Game2048Page() {
             </p>
           </div>
 
+          <div className="mt-6 lg:mt-0 lg:w-80 lg:shrink-0 space-y-4">
+          {/* Цолнууд — хүрсэн цол тод, хүрээгүй нь бүдэг */}
+          <aside className="bg-surface-elevated border border-border rounded-3xl p-4 shadow-2xl">
+            <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-on-surface-muted font-semibold mb-3">
+              <Crown size={14} className="text-amber-400" />
+              Цолнууд
+            </p>
+            <ol className="grid grid-cols-2 gap-1.5">
+              {[...Object.keys(TITLES).map(Number), GOLD * 2].map((v) => {
+                const reached = recordTile >= v;
+                return (
+                  <li
+                    key={v}
+                    className={`flex items-center gap-2 rounded-xl px-1.5 py-1.5 transition-opacity ${reached ? "" : "opacity-40"}`}
+                  >
+                    <span
+                      className="w-11 shrink-0 rounded-lg py-1 text-center text-[10px] font-black tabular-nums"
+                      style={tileStyle(v)}
+                    >
+                      {v === GOLD * 2 ? "4096+" : v}
+                    </span>
+                    <span className="text-[11px] font-bold leading-tight min-w-0">{titleOf(v)}</span>
+                  </li>
+                );
+              })}
+            </ol>
+          </aside>
+
           {/* Ангийн рекорд */}
-          <aside className="mt-6 lg:mt-0 lg:w-80 lg:shrink-0 bg-surface-elevated border border-border rounded-3xl p-4 shadow-2xl">
+          <aside className="bg-surface-elevated border border-border rounded-3xl p-4 shadow-2xl">
             <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-on-surface-muted font-semibold mb-3">
               <Trophy size={14} className="text-amber-400" />
               Ангийн рекорд
@@ -453,10 +513,10 @@ export default function Game2048Page() {
                       <span className="flex-1 min-w-0 text-sm font-bold truncate">{r.fullName || r.userName}</span>
                       {r.bestTile > 0 && (
                         <span
-                          className="px-1.5 py-0.5 rounded-md text-[10px] font-black tabular-nums"
+                          className="px-1.5 py-0.5 rounded-md text-[10px] font-black whitespace-nowrap"
                           style={tileStyle(Math.min(r.bestTile, 1 << 20))}
                         >
-                          {r.bestTile}
+                          {titleOf(r.bestTile)}
                         </span>
                       )}
                       <span className="text-sm font-black tabular-nums">{r.best}</span>
@@ -466,6 +526,7 @@ export default function Game2048Page() {
               </ol>
             )}
           </aside>
+          </div>
         </div>
       </div>
     </div>
