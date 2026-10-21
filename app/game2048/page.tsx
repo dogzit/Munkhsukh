@@ -145,25 +145,38 @@ function titleOf(v: number) {
   return TITLES[v] ?? (v > GOLD ? "Ариун цэвэр дарга" : "Шинэков");
 }
 
-/** Дунд зэргийн өнгөнөөс эхэлж тодорно; 2048-аас дээш алтан */
+/** Тоо бүр өөрийн энгийн өнгөтэй; 2048 хамгийн гоё, 4096+ ганцаараа алтан */
+const COLORS: Record<number, { bg: string; fg: string }> = {
+  2: { bg: "#f5f5f4", fg: "#292524" }, // цагаан
+  4: { bg: "#fde047", fg: "#422006" }, // шар
+  8: { bg: "#4ade80", fg: "#052e16" }, // ногоон
+  16: { bg: "#2dd4bf", fg: "#042f2e" }, // оюу
+  32: { bg: "#38bdf8", fg: "#082f49" }, // цэнхэр
+  64: { bg: "#3b82f6", fg: "#ffffff" }, // хөх
+  128: { bg: "#6366f1", fg: "#ffffff" }, // индиго
+  256: { bg: "#a855f7", fg: "#ffffff" }, // нил ягаан
+  512: { bg: "#ec4899", fg: "#ffffff" }, // ягаан
+  1024: { bg: "#ef4444", fg: "#ffffff" }, // улаан
+};
+
 function tileStyle(v: number): React.CSSProperties {
-  if (v >= GOLD) {
+  if (v > GOLD) {
     return {
       background: "linear-gradient(135deg, #fff3b0 0%, #fbbf24 40%, #d97706 75%, #92400e 100%)",
       color: "#3b1d00",
       boxShadow: "0 0 18px 2px rgba(251,191,36,0.65), inset 0 1px 0 rgba(255,255,255,0.7)",
     };
   }
-  const level = Math.log2(v); // 1 (2) … 10 (1024)
-  const t = (level - 1) / 9; // 0 … 1
-  const mix = Math.round(45 + t * 55); // 45% … 100% accent
-  const light = Math.round(t * 32); // том тоонд цагаан холиж гэрэлтүүлнэ
-  return {
-    background: `color-mix(in oklab, color-mix(in oklab, var(--color-accent) ${mix}%, #1a1a26) ${100 - light}%, white)`,
-    color: "#ffffff",
-    textShadow: "0 1px 2px rgba(0,0,0,0.35)",
-    boxShadow: `0 0 ${Math.round(4 + t * 18)}px color-mix(in oklab, var(--color-accent) ${Math.round(25 + t * 45)}%, transparent)`,
-  };
+  if (v === GOLD) {
+    return {
+      background: "linear-gradient(135deg, #0f172a 0%, #312e81 45%, #0e7490 100%)",
+      color: "#67e8f9",
+      textShadow: "0 0 8px rgba(103,232,249,0.8)",
+      boxShadow: "0 0 16px 2px rgba(34,211,238,0.55), inset 0 0 0 1.5px rgba(103,232,249,0.6)",
+    };
+  }
+  const c = COLORS[v] ?? COLORS[2];
+  return { background: c.bg, color: c.fg };
 }
 
 function numberSize(v: number) {
