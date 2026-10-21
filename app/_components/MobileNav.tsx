@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   Gamepad2,
+  Sparkles,
   Home,
   BookOpen,
   Clock,
@@ -28,6 +29,7 @@ import {
 import { useMyRoles } from "./useMyRoles";
 import { canUseLeave } from "@/lib/leave";
 import { canPlayGames } from "@/lib/games";
+import { canSeeCleaning } from "@/lib/cleaning";
 
 type NavItem = { icon: LucideIcon; label: string; href: string };
 
@@ -77,6 +79,9 @@ export default function MobileNav() {
       : []),
     ...(canUseLeave(roles?.role)
       ? [{ icon: CalendarOff, label: "Чөлөө авах", href: "/leave", color: "from-teal-500 to-cyan-500" }]
+      : []),
+    ...(canSeeCleaning(roles?.role)
+      ? [{ icon: Sparkles, label: "Цэвэрлэгээ", href: "/cleaning", color: "from-emerald-500 to-green-600" }]
       : []),
     ...(canPlayGames(roles?.role)
       ? [{ icon: Gamepad2, label: "2048", href: "/game2048", color: "from-amber-400 to-orange-600" }]

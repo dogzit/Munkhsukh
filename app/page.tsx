@@ -1,10 +1,11 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { BookOpen, Clock, ArrowRight, MessageCircle, Newspaper, Users, Crown, GraduationCap, Gamepad2 } from "lucide-react";
+import { BookOpen, Clock, ArrowRight, MessageCircle, Newspaper, Users, Crown, GraduationCap, Gamepad2, Sparkles } from "lucide-react";
 import { useMyRoles } from "./_components/useMyRoles";
 import { useEffect, useState } from "react";
 import BusSeatPanel from "./_components/BusSeatPanel";
 import { gamesClosedUntil } from "@/lib/games";
+import { canSeeCleaning, groupIndexFor, type Roster } from "@/lib/cleaning";
 import AppHeader from "./_components/AppHeader";
 
 const MON_DAYS = ["Ням", "Даваа", "Мягмар", "Лхагва", "Пүрэв", "Баасан", "Бямба"];
@@ -18,7 +19,12 @@ function getGreeting(hour: number) {
 
 export default function HomePage() {
   const router = useRouter();
-  const { isLeader } = useMyRoles();
+  const { isLeader, roles } = useMyRoles();
+  const showCleaning = canSeeCleaning(roles?.role);
+  const [cleaning, setCleaning] = useState<
+    (Roster & { today: string; users: { name: string; fullName: string | null }[] }) | null
+  >(null);
+  const [me, setMe] = useState("");
   const [now, setNow] = useState<Date | null>(null);
   const [mounted, setMounted] = useState(false);
   // null = хараахан мэдэгдээгүй (юу ч рендэрлэхгүй)
@@ -32,6 +38,17 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    if (!showCleaning) return;
+    try {
+      setMe(localStorage.getItem("name") ?? "");
+    } catch { /* */ }
+    fetch("/api/cleaning", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setCleaning)
+      .catch(() => {});
+  }, [showCleaning]);
+
+  useEffect(() => {
     fetch("/api/settings")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setBusEnabled(!!d?.busBookingEnabled))
@@ -42,6 +59,12 @@ export default function HomePage() {
     ? getGreeting(now.getHours())
     : { text: "Сайн уу", emoji: "🎓", gradient: "from-violet-500 to-cyan-500" };
   const gameClosed = now ? gamesClosedUntil(now.getTime()) !== null : false;
+  const cleanIdx = cleaning ? groupIndexFor(cleaning.today, cleaning) : null;
+  const cleanMembers = cleanIdx !== null ? (cleaning?.groups[cleanIdx] ?? []) : [];
+  const onDuty = cleanMembers.includes(me);
+  const cleanNames = cleanMembers
+    .map((n) => cleaning?.users.find((u) => u.name === n)?.fullName || n)
+    .join(", ");
   const dateStr = now ? `${MON_DAYS[now.getDay()]}, ${now.getMonth() + 1}/${now.getDate()}` : "";
   const timeStr = now
     ? `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
@@ -99,6 +122,37 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+
+        {/* Өнөөдрийн цэвэрлэгээ — жижүүр бол ногоон */}
+        {showCleaning && cleaning && (
+          <button
+            onClick={() => router.push("/cleaning")}
+            className={`w-full mb-6 rounded-2xl border p-4 text-left flex items-center gap-3 active:scale-[0.98] transition-all ${
+              onDuty
+                ? "bg-emerald-500 border-emerald-400 text-white shadow-lg shadow-emerald-500/30"
+                : cleanIdx !== null
+                  ? "bg-emerald-500/10 border-emerald-500/40"
+                  : "border-white/[0.08] bg-white/[0.03]"
+            }`}
+          >
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${onDuty ? "bg-white/20" : "bg-gradient-to-br from-emerald-500 to-green-600"}`}>
+              <Sparkles size={20} className="text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-black text-sm">
+                {onDuty
+                  ? "🧹 Өнөөдөр чи цэвэрлэгээтэй!"
+                  : cleanIdx !== null
+                    ? `Өнөөдөр ${cleanIdx + 1}-р бүлэг цэвэрлэнэ`
+                    : "Өнөөдөр цэвэрлэгээгүй"}
+              </p>
+              <p className={`text-[11px] truncate ${onDuty ? "text-white/85" : "text-on-surface-muted"}`}>
+                {cleanIdx !== null ? cleanNames || "Хүн оруулаагүй" : "Цэвэрлэгээний хуваарь"}
+              </p>
+            </div>
+            <ArrowRight size={14} className={onDuty ? "text-white/70" : "text-on-surface-muted/40"} />
+          </button>
+        )}
 
         {/* Quick actions — 2 primary */}
         <div

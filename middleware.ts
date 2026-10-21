@@ -48,6 +48,7 @@ const PUBLIC_API = [
   "/api/auth/logout",
   "/api/auth/forgot-pin",
   "/api/qr/",
+  "/api/cron/",
 ];
 const PUBLIC_PAGES = [
   "/auth/login",

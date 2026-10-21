@@ -340,3 +340,18 @@ model GameScore {
   @@unique([game, userName])
   @@index([game, best])
 }
+
+// --- Ангийн цэвэрлэгээний жижүүр (бүлгүүд өдөр өдрөөр ээлжилнэ) ---
+model CleaningRoster {
+  id           String   @id @default("main")
+  // Бүлэг бүрийн гишүүдийн нэр (userName) — [["a","b","c","d"], ...]
+  groups       Json     @default("[]")
+  // anchorDate өдөр anchorIndex-р бүлэг жижүүрлэнэ, түүнээс хойш дараалан
+  anchorDate   String
+  anchorIndex  Int      @default(0)
+  // Бямба, ням гарагийг алгасах
+  skipWeekends Boolean  @default(true)
+  // Сүүлд мэдэгдэл явуулсан өдөр (YYYY-MM-DD) — өдөрт нэг л удаа
+  lastNotified String?
+  updatedAt    DateTime @updatedAt
+}

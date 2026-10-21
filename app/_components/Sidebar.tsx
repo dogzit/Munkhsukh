@@ -6,8 +6,10 @@ import LogoutConfirm from "./LogoutConfirm";
 import { useMyRoles } from "./useMyRoles";
 import { canUseLeave } from "@/lib/leave";
 import { canPlayGames } from "@/lib/games";
+import { canSeeCleaning } from "@/lib/cleaning";
 import {
   Gamepad2,
+  Sparkles,
   Home,
   BookOpen,
   Clock,
@@ -140,6 +142,9 @@ export default function Sidebar() {
             : []),
           ...(canUseLeave(roles?.role)
             ? [{ icon: <CalendarOff size={20} />, label: "Чөлөө авах", href: "/leave" }]
+            : []),
+          ...(canSeeCleaning(roles?.role)
+            ? [{ icon: <Sparkles size={20} />, label: "Цэвэрлэгээ", href: "/cleaning" }]
             : []),
           ...(canPlayGames(roles?.role)
             ? [{ icon: <Gamepad2 size={20} />, label: "2048", href: "/game2048" }]
