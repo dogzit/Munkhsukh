@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { BookOpen, Clock, ArrowRight, MessageCircle, Newspaper, Users, Crown, GraduationCap } from "lucide-react";
+import { BookOpen, Clock, ArrowRight, MessageCircle, Newspaper, Users, Crown, GraduationCap, Gamepad2 } from "lucide-react";
 import { useMyRoles } from "./_components/useMyRoles";
 import { useEffect, useState } from "react";
 import BusSeatPanel from "./_components/BusSeatPanel";
@@ -187,6 +187,29 @@ export default function HomePage() {
             <div className="flex-1 min-w-0">
               <p className="font-black text-sm">Сурагчид</p>
               <p className="text-[10px] text-on-surface-muted">Ангийнхны жагсаалт</p>
+            </div>
+            <ArrowRight size={14} className="text-on-surface-muted/40 group-hover:text-on-surface-muted transition-colors" />
+          </button>
+
+          <button
+            onClick={() => router.push("/game2048")}
+            className="col-span-2 group relative overflow-hidden rounded-2xl border border-amber-500/25 bg-amber-500/[0.04] backdrop-blur-xl
+              p-4 text-left flex items-center gap-3
+              hover:border-amber-500/45 hover:bg-amber-500/[0.08]
+              active:scale-[0.97] transition-all duration-300"
+          >
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+              <Gamepad2 size={20} className="text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-black text-sm">2048 тоглоом</p>
+              <p className="text-[10px] text-on-surface-muted">Шинэковоос Ариун цэвэр дарга хүртэл 🏆</p>
+            </div>
+            {/* Жижиг хавтангууд */}
+            <div className="hidden min-[360px]:grid grid-cols-2 gap-0.5 shrink-0">
+              {["#f5f5f4", "#fde047", "#4ade80", "#38bdf8"].map((c) => (
+                <span key={c} className="w-3.5 h-3.5 rounded-[4px]" style={{ background: c }} />
+              ))}
             </div>
             <ArrowRight size={14} className="text-on-surface-muted/40 group-hover:text-on-surface-muted transition-colors" />
           </button>
