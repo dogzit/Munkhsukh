@@ -5,10 +5,11 @@ import { useRouter, usePathname } from "next/navigation";
 import LogoutConfirm from "./LogoutConfirm";
 import { useMyRoles } from "./useMyRoles";
 import { canUseLeave } from "@/lib/leave";
-import { canPlayGames } from "@/lib/games";
+import { canPlayBlock, canPlayGames } from "@/lib/games";
 import { canSeeCleaning } from "@/lib/cleaning";
 import {
   Gamepad2,
+  Blocks,
   Sparkles,
   Home,
   BookOpen,
@@ -148,6 +149,9 @@ export default function Sidebar() {
             : []),
           ...(canPlayGames(roles?.role)
             ? [{ icon: <Gamepad2 size={20} />, label: "2048", href: "/game2048" }]
+            : []),
+          ...(canPlayBlock(roles?.role)
+            ? [{ icon: <Blocks size={20} />, label: "BLOCK!!!", href: "/block" }]
             : []),
         ].map((item) => {
           const active = isActive(pathname, item.href);

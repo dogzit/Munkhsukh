@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   Gamepad2,
+  Blocks,
   Sparkles,
   Home,
   BookOpen,
@@ -28,7 +29,7 @@ import {
 } from "lucide-react";
 import { useMyRoles } from "./useMyRoles";
 import { canUseLeave } from "@/lib/leave";
-import { canPlayGames } from "@/lib/games";
+import { canPlayBlock, canPlayGames } from "@/lib/games";
 import { canSeeCleaning } from "@/lib/cleaning";
 
 type NavItem = { icon: LucideIcon; label: string; href: string };
@@ -85,6 +86,9 @@ export default function MobileNav() {
       : []),
     ...(canPlayGames(roles?.role)
       ? [{ icon: Gamepad2, label: "2048", href: "/game2048", color: "from-amber-400 to-orange-600" }]
+      : []),
+    ...(canPlayBlock(roles?.role)
+      ? [{ icon: Blocks, label: "BLOCK!!!", href: "/block", color: "from-cyan-400 to-blue-600" }]
       : []),
     ...(isAdmin
       ? [{ icon: Shield, label: "Админ панел", href: "/admin", color: "from-rose-500 to-pink-500" }]

@@ -15,3 +15,10 @@ export function gamesClosedUntil(now = Date.now()): number | null {
   const until = new Date(GAMES_CLOSED_UNTIL).getTime();
   return now < until ? until : null;
 }
+
+// BLOCK!!! — туршилтын үед зөвхөн админд (true болговол бүгдэд нээгдэнэ).
+export const BLOCK_PUBLIC = false;
+
+export function canPlayBlock(role: string | undefined) {
+  return BLOCK_PUBLIC || role === "ADMIN";
+}
