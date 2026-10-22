@@ -15,189 +15,35 @@ import {
   Trophy,
   Crown,
   Loader2,
+  Keyboard,
 } from "lucide-react";
 import AppHeader from "@/app/_components/AppHeader";
 import { useMyRoles } from "@/app/_components/useMyRoles";
 import { canPlayBlock } from "@/lib/games";
 
-const COLS = 10;
-const ROWS = 20;
+import {
+  CLEAR_MS,
+  COLORS,
+  COLS,
+  ROWS,
+  SHAPES,
+  cellsOf,
+  dropDistance,
+  fresh,
+  reducer,
+  speedFor,
+  type Action,
+  type Kind,
+} from "@/lib/block";
 
-type Kind = "I" | "O" | "T" | "S" | "Z" | "J" | "L";
-const KINDS: Kind[] = ["I", "O", "T", "S", "Z", "J", "L"];
-
-const SHAPES: Record<Kind, number[][]> = {
-  I: [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]],
-  O: [[1, 1], [1, 1]],
-  T: [[0, 1, 0], [1, 1, 1], [0, 0, 0]],
-  S: [[0, 1, 1], [1, 1, 0], [0, 0, 0]],
-  Z: [[1, 1, 0], [0, 1, 1], [0, 0, 0]],
-  J: [[1, 0, 0], [1, 1, 1], [0, 0, 0]],
-  L: [[0, 0, 1], [1, 1, 1], [0, 0, 0]],
-};
-
-// Дүрс бүр өөрийн энгийн тод өнгөтэй
-const COLORS: Record<Kind, string> = {
-  I: "#22d3ee",
-  O: "#fde047",
-  T: "#a855f7",
-  S: "#4ade80",
-  Z: "#ef4444",
-  J: "#3b82f6",
-  L: "#fb923c",
-};
-
-const LINE_POINTS = [0, 100, 300, 500, 800];
-
-type Piece = { k: Kind; m: number[][]; x: number; y: number };
-
-type State = {
-  board: (Kind | null)[];
-  piece: Piece;
-  next: Kind;
-  bag: Kind[];
-  score: number;
-  lines: number;
-  level: number;
-  over: boolean;
-  paused: boolean;
-  started: boolean;
-};
-
-type Action =
-  | { type: "move"; dx: number }
-  | { type: "rotate" }
-  | { type: "soft" }
-  | { type: "hard" }
-  | { type: "tick" }
-  | { type: "pause"; value?: boolean }
-  | { type: "start" };
-
-function shuffled(): Kind[] {
-  const a = [...KINDS];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-/** 7 дүрсийг холиод дарааллаар нь гаргана — нэг дүрс удаан гарахгүй байх асуудалгүй */
-function draw(bag: Kind[]): [Kind, Kind[]] {
-  const b = bag.length ? bag : shuffled();
-  return [b[0], b.slice(1)];
-}
-
-function spawn(k: Kind): Piece {
-  const m = SHAPES[k];
-  return { k, m, x: Math.floor((COLS - m.length) / 2), y: k === "I" ? -1 : 0 };
-}
-
-function cellsOf(p: Piece): [number, number][] {
-  const out: [number, number][] = [];
-  p.m.forEach((row, r) => row.forEach((v, c) => v && out.push([p.y + r, p.x + c])));
-  return out;
-}
-
-function fits(board: (Kind | null)[], p: Piece) {
-  return cellsOf(p).every(([r, c]) => c >= 0 && c < COLS && r < ROWS && (r < 0 || !board[r * COLS + c]));
-}
-
-function rotateCW(m: number[][]) {
-  const n = m.length;
-  return m.map((row, r) => row.map((_, c) => m[n - 1 - c][r]));
-}
-
-function dropDistance(board: (Kind | null)[], p: Piece) {
-  let d = 0;
-  while (fits(board, { ...p, y: p.y + d + 1 })) d++;
-  return d;
-}
-
-function fresh(started: boolean): State {
-  const [k, bag1] = draw([]);
-  const [next, bag] = draw(bag1);
-  return {
-    board: Array(COLS * ROWS).fill(null),
-    piece: spawn(k),
-    next,
-    bag,
-    score: 0,
-    lines: 0,
-    level: 0,
-    over: false,
-    paused: false,
-    started,
-  };
-}
-
-/** Дүрсийг байранд нь тогтоож, дүүрсэн мөрүүдийг устгаад дараагийн дүрсийг гаргана */
-function lock(s: State, piece: Piece, bonus = 0): State {
-  const board = [...s.board];
-  let overTop = false;
-  for (const [r, c] of cellsOf(piece)) {
-    if (r < 0) overTop = true;
-    else board[r * COLS + c] = piece.k;
-  }
-
-  const kept: (Kind | null)[][] = [];
-  for (let r = 0; r < ROWS; r++) {
-    const row = board.slice(r * COLS, r * COLS + COLS);
-    if (!row.every(Boolean)) kept.push(row);
-  }
-  const cleared = ROWS - kept.length;
-  const newBoard = [...Array.from({ length: cleared }, () => Array(COLS).fill(null)), ...kept].flat();
-
-  const lines = s.lines + cleared;
-  const score = s.score + bonus + LINE_POINTS[cleared] * (s.level + 1);
-  const level = Math.floor(lines / 10);
-  const nextPiece = spawn(s.next);
-  const [next, bag] = draw(s.bag);
-  const over = overTop || !fits(newBoard, nextPiece);
-
-  return { ...s, board: newBoard, piece: nextPiece, next, bag, score, lines, level, over };
-}
-
-function reducer(s: State, a: Action): State {
-  if (a.type === "start") return fresh(true);
-  if (a.type === "pause") {
-    if (!s.started || s.over) return s;
-    return { ...s, paused: a.value ?? !s.paused };
-  }
-  if (!s.started || s.over || s.paused) return s;
-
-  switch (a.type) {
-    case "move": {
-      const p = { ...s.piece, x: s.piece.x + a.dx };
-      return fits(s.board, p) ? { ...s, piece: p } : s;
-    }
-    case "rotate": {
-      if (s.piece.k === "O") return s;
-      const m = rotateCW(s.piece.m);
-      // Хананд наалдсан үед хажуу тийш түлхэж эргүүлнэ
-      for (const dx of [0, -1, 1, -2, 2]) {
-        const p = { ...s.piece, m, x: s.piece.x + dx };
-        if (fits(s.board, p)) return { ...s, piece: p };
-      }
-      return s;
-    }
-    case "soft":
-    case "tick": {
-      const p = { ...s.piece, y: s.piece.y + 1 };
-      if (fits(s.board, p)) return { ...s, piece: p, score: s.score + (a.type === "soft" ? 1 : 0) };
-      return lock(s, s.piece);
-    }
-    case "hard": {
-      const d = dropDistance(s.board, s.piece);
-      return lock(s, { ...s.piece, y: s.piece.y + d }, d * 2);
-    }
-  }
-  return s;
-}
-
-function speedFor(level: number) {
-  return Math.max(90, 800 - level * 70);
-}
+const KEYBINDS: [string[], string][] = [
+  [["←", "A"], "Зүүн"],
+  [["→", "D"], "Баруун"],
+  [["↑", "W", "X"], "Эргүүлэх"],
+  [["↓", "S"], "Доош"],
+  [["Space"], "Шууд унагаах"],
+  [["P", "Esc"], "Түр зогсоох"],
+];
 
 type TopRow = {
   userName: string;
@@ -249,14 +95,16 @@ function HoldButton({
   );
 }
 
-function Cell({ k, ghost }: { k: Kind | null; ghost?: Kind | null }) {
+function Cell({ k, ghost, clearing, col }: { k: Kind | null; ghost?: Kind | null; clearing?: boolean; col: number }) {
   if (k) {
     return (
       <div
-        className="rounded-[3px]"
+        className={`rounded-[3px] ${clearing ? "block-clear" : ""}`}
         style={{
           background: COLORS[k],
           boxShadow: "inset 0 -3px 0 rgba(0,0,0,0.25), inset 0 2px 0 rgba(255,255,255,0.4)",
+          // Мөр голоосоо хоёр тийш арилна
+          animationDelay: clearing ? `${Math.abs(col - 4.5) * 22}ms` : undefined,
         }}
       />
     );
@@ -313,6 +161,13 @@ export default function BlockPage() {
     const id = setInterval(() => dispatch({ type: "tick" }), speedFor(s.level));
     return () => clearInterval(id);
   }, [s.started, s.over, s.paused, s.level]);
+
+  // Мөр гялсхийж дуусахад устгана
+  useEffect(() => {
+    if (!s.clearing) return;
+    const t = setTimeout(() => dispatch({ type: "finishClear" }), CLEAR_MS);
+    return () => clearTimeout(t);
+  }, [s.clearing]);
 
   // Өөр таб руу шилжвэл түр зогсоно
   useEffect(() => {
@@ -390,7 +245,7 @@ export default function BlockPage() {
   // Харагдах талбар: тогтсон блок + сүүдэр + унаж буй дүрс
   const view: (Kind | null)[] = [...s.board];
   const ghost: (Kind | null)[] = Array(COLS * ROWS).fill(null);
-  if (s.started && !s.over) {
+  if (s.started && !s.over && !s.clearing) {
     const d = dropDistance(s.board, s.piece);
     for (const [r, c] of cellsOf({ ...s.piece, y: s.piece.y + d })) if (r >= 0) ghost[r * COLS + c] = s.piece.k;
     for (const [r, c] of cellsOf(s.piece)) if (r >= 0) view[r * COLS + c] = s.piece.k;
@@ -400,6 +255,41 @@ export default function BlockPage() {
 
   return (
     <div className="min-h-screen bg-surface text-on-surface font-sans">
+      <style>{`
+        @keyframes block-clear {
+          0% { filter: brightness(1); transform: scale(1); }
+          35% { filter: brightness(2.4); background: #ffffff; transform: scale(1.08); }
+          100% { filter: brightness(2); background: #ffffff; transform: scale(0); opacity: 0; }
+        }
+        .block-clear { animation: block-clear ${CLEAR_MS}ms ease-in forwards; }
+        @keyframes block-flash {
+          0% { opacity: 0; transform: scaleX(0.1); }
+          40% { opacity: 0.95; transform: scaleX(1); }
+          100% { opacity: 0; transform: scaleX(1.05); }
+        }
+        .block-flash {
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95), rgba(34,211,238,0.9), rgba(255,255,255,0.95), transparent);
+          box-shadow: 0 0 18px 4px rgba(34,211,238,0.7);
+          animation: block-flash ${CLEAR_MS}ms ease-out forwards;
+        }
+        @keyframes block-popup {
+          0% { opacity: 0; transform: translateY(12px) scale(0.6); }
+          18% { opacity: 1; transform: translateY(0) scale(1.12); }
+          30% { transform: scale(1); }
+          75% { opacity: 1; }
+          100% { opacity: 0; transform: translateY(-36px) scale(1); }
+        }
+        .block-popup { animation: block-popup 1100ms ease-out forwards; }
+        .block-popup-big { animation-duration: 1500ms; }
+        @keyframes block-shake {
+          0%, 100% { transform: translate(0, 0); }
+          20% { transform: translate(-5px, 2px); }
+          40% { transform: translate(5px, -2px); }
+          60% { transform: translate(-3px, 1px); }
+          80% { transform: translate(3px, 0); }
+        }
+        .block-shake { animation: block-shake 360ms ease-in-out; }
+      `}</style>
       <AppHeader
         title="BLOCK!!!"
         subtitle="Мөрөө дүүргэж устга"
@@ -421,14 +311,55 @@ export default function BlockPage() {
                   onTouchStart={onTouchStart}
                   onTouchMove={onTouchMove}
                   onTouchEnd={onTouchEnd}
-                  className="relative aspect-[1/2] rounded-2xl bg-surface-elevated border border-border p-1 shadow-2xl select-none"
+                  key={s.popup?.lines === 4 ? `shake${s.popup.id}` : "board"}
+                  className={`relative aspect-[1/2] rounded-2xl bg-surface-elevated border border-border p-1 shadow-2xl select-none ${
+                    s.popup?.lines === 4 ? "block-shake" : ""
+                  }`}
                   style={{ width: "min(100%, calc((100dvh - 330px) / 2))", minWidth: 180, touchAction: "none" }}
                 >
                   <div className="grid h-full gap-[2px]" style={{ gridTemplateColumns: `repeat(${COLS}, 1fr)` }}>
                     {view.map((k, i) => (
-                      <Cell key={i} k={k} ghost={ghost[i]} />
+                      <Cell
+                        key={i}
+                        k={k}
+                        ghost={ghost[i]}
+                        col={i % COLS}
+                        clearing={!!s.clearing?.includes(Math.floor(i / COLS))}
+                      />
                     ))}
                   </div>
+
+                  {/* Устах мөрүүд дээгүүр гэрэл гүйнэ */}
+                  {s.clearing?.map((r) => (
+                    <div
+                      key={`flash${r}`}
+                      className="block-flash pointer-events-none absolute left-1 right-1 rounded-[3px]"
+                      style={{ top: `calc(4px + ${r} * (100% - 8px) / ${ROWS})`, height: `calc((100% - 8px) / ${ROWS})` }}
+                    />
+                  ))}
+
+                  {/* +оноо бичиг */}
+                  {s.popup && (
+                    <div
+                      key={s.popup.id}
+                      className={`block-popup pointer-events-none absolute inset-x-0 top-[38%] z-[5] text-center ${
+                        s.popup.lines === 4 ? "block-popup-big" : ""
+                      }`}
+                    >
+                      <p
+                        className="font-black tracking-tight text-white"
+                        style={{
+                          fontSize: s.popup.lines === 4 ? "2rem" : "1.4rem",
+                          textShadow: "0 0 12px rgba(34,211,238,0.9), 0 2px 0 rgba(0,0,0,0.5)",
+                        }}
+                      >
+                        {s.popup.label}
+                      </p>
+                      <p className="text-sm font-black text-amber-300" style={{ textShadow: "0 1px 0 rgba(0,0,0,0.6)" }}>
+                        +{s.popup.pts}
+                      </p>
+                    </div>
+                  )}
 
                   {(!s.started || s.over || s.paused) && (
                     <div className="absolute inset-0 z-10 rounded-2xl bg-black/65 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 p-4 text-center">
@@ -519,10 +450,37 @@ export default function BlockPage() {
                 <ChevronsDown size={24} />
               </HoldButton>
             </div>
-            <p className="mt-2.5 text-center text-[11px] text-on-surface-muted">
+            <p className="mt-2.5 text-center text-[11px] text-on-surface-muted [@media(pointer:fine)]:hidden">
               Талбар дээр: чирж хөдөлгөх • товшиж эргүүлэх • доош шударч унагаах
-              <span className="hidden lg:inline"> • Компьютер: сум, Space, P</span>
             </p>
+
+            {/* MacBook / notebook-ийн товчлуурууд — хулганатай төхөөрөмжид харагдана */}
+            <div className="mt-3 hidden [@media(pointer:fine)]:block bg-surface-elevated border border-border rounded-3xl p-4">
+              <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-on-surface-muted font-semibold mb-3">
+                <Keyboard size={14} className="text-cyan-400" />
+                Товчлуурууд
+              </p>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                {KEYBINDS.map(([keys, label]) => (
+                  <li key={label} className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-on-surface-muted">{label}</span>
+                    <span className="flex items-center gap-1">
+                      {keys.map((k, i) => (
+                        <span key={k} className="flex items-center gap-1">
+                          {i > 0 && <span className="text-[10px] text-on-surface-muted">/</span>}
+                          <kbd
+                            className="min-w-[1.75rem] px-1.5 h-7 inline-flex items-center justify-center rounded-lg
+                              bg-surface-alt border border-border border-b-[3px] text-[11px] font-black font-sans"
+                          >
+                            {k}
+                          </kbd>
+                        </span>
+                      ))}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
           {/* Ангийн рекорд */}
