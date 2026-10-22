@@ -5,11 +5,9 @@ import { useRouter, usePathname } from "next/navigation";
 import LogoutConfirm from "./LogoutConfirm";
 import { useMyRoles } from "./useMyRoles";
 import { canUseLeave } from "@/lib/leave";
-import { canPlayBlock, canPlayGames } from "@/lib/games";
 import { canSeeCleaning } from "@/lib/cleaning";
 import {
   Gamepad2,
-  Blocks,
   Sparkles,
   Home,
   BookOpen,
@@ -46,6 +44,7 @@ const navItems = [
   { icon: <BarChart3 size={20} />, label: "Санал асуулга", href: "/poll" },
   { icon: <GraduationCap size={20} />, label: "Сурагчид", href: "/students" },
   { icon: <Shuffle size={20} />, label: "Сурагч сонгох", href: "/random" },
+  { icon: <Gamepad2 size={20} />, label: "Тоглоом", href: "/games" },
   { icon: <Trophy size={20} />, label: "Тэргүүлэгчид", href: "/leaderboard" },
 ];
 
@@ -53,6 +52,7 @@ const COLLAPSED_KEY = "sidebar_collapsed";
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
+  if (href === "/games") return ["/games", "/game2048", "/block"].some((p) => pathname.startsWith(p));
   return pathname === href || pathname.startsWith(href + "/");
 }
 
@@ -146,12 +146,6 @@ export default function Sidebar() {
             : []),
           ...(canSeeCleaning(roles?.role)
             ? [{ icon: <Sparkles size={20} />, label: "Цэвэрлэгээ", href: "/cleaning" }]
-            : []),
-          ...(canPlayGames(roles?.role)
-            ? [{ icon: <Gamepad2 size={20} />, label: "2048", href: "/game2048" }]
-            : []),
-          ...(canPlayBlock(roles?.role)
-            ? [{ icon: <Blocks size={20} />, label: "BLOCK!!!", href: "/block" }]
             : []),
         ].map((item) => {
           const active = isActive(pathname, item.href);

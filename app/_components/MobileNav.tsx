@@ -5,7 +5,6 @@ import { useRouter, usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   Gamepad2,
-  Blocks,
   Sparkles,
   Home,
   BookOpen,
@@ -29,7 +28,6 @@ import {
 } from "lucide-react";
 import { useMyRoles } from "./useMyRoles";
 import { canUseLeave } from "@/lib/leave";
-import { canPlayBlock, canPlayGames } from "@/lib/games";
 import { canSeeCleaning } from "@/lib/cleaning";
 
 type NavItem = { icon: LucideIcon; label: string; href: string };
@@ -53,11 +51,13 @@ const moreItems: (NavItem & { color: string })[] = [
   { icon: CheckSquare, label: "Todo", href: "/todo", color: "from-emerald-500 to-teal-500" },
   { icon: Trophy, label: "Тэргүүлэгчид", href: "/leaderboard", color: "from-yellow-500 to-amber-500" },
   { icon: Shuffle, label: "Сурагч сонгох", href: "/random", color: "from-pink-500 to-rose-500" },
+  { icon: Gamepad2, label: "Тоглоом", href: "/games", color: "from-fuchsia-500 to-violet-600" },
   { icon: User, label: "Профайл", href: "/profile", color: "from-slate-500 to-zinc-500" },
 ];
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
+  if (href === "/games") return ["/games", "/game2048", "/block"].some((p) => pathname.startsWith(p));
   return pathname === href || pathname.startsWith(href + "/");
 }
 
@@ -83,12 +83,6 @@ export default function MobileNav() {
       : []),
     ...(canSeeCleaning(roles?.role)
       ? [{ icon: Sparkles, label: "Цэвэрлэгээ", href: "/cleaning", color: "from-emerald-500 to-green-600" }]
-      : []),
-    ...(canPlayGames(roles?.role)
-      ? [{ icon: Gamepad2, label: "2048", href: "/game2048", color: "from-amber-400 to-orange-600" }]
-      : []),
-    ...(canPlayBlock(roles?.role)
-      ? [{ icon: Blocks, label: "BLOCK!!!", href: "/block", color: "from-cyan-400 to-blue-600" }]
       : []),
     ...(isAdmin
       ? [{ icon: Shield, label: "Админ панел", href: "/admin", color: "from-rose-500 to-pink-500" }]

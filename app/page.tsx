@@ -4,7 +4,7 @@ import { BookOpen, Clock, ArrowRight, MessageCircle, Newspaper, Users, Crown, Gr
 import { useMyRoles } from "./_components/useMyRoles";
 import { useEffect, useState } from "react";
 import BusSeatPanel from "./_components/BusSeatPanel";
-import { gamesClosedUntil } from "@/lib/games";
+import { canPlayBlock, gamesClosedUntil } from "@/lib/games";
 import { canSeeCleaning, groupIndexFor, type Roster } from "@/lib/cleaning";
 import AppHeader from "./_components/AppHeader";
 
@@ -248,7 +248,7 @@ export default function HomePage() {
           </button>
 
           <button
-            onClick={() => router.push("/game2048")}
+            onClick={() => router.push("/games")}
             className="col-span-2 group relative overflow-hidden rounded-2xl border border-amber-500/25 bg-amber-500/[0.04] backdrop-blur-xl
               p-4 text-left flex items-center gap-3
               hover:border-amber-500/45 hover:bg-amber-500/[0.08]
@@ -258,9 +258,9 @@ export default function HomePage() {
               <Gamepad2 size={20} className="text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-black text-sm">2048 тоглоом</p>
+              <p className="font-black text-sm">Тоглоом</p>
               <p className="text-[10px] text-on-surface-muted">
-                {gameClosed ? "🔒 Түр хаалттай" : "Шинэковоос Ариун цэвэр дарга хүртэл 🏆"}
+                {gameClosed ? "🔒 Түр хаалттай" : canPlayBlock(roles?.role) ? "2048 • BLOCK!!!" : "2048"}
               </p>
             </div>
             {/* Жижиг хавтангууд */}
