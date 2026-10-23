@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Gamepad2, Blocks, ChevronRight, Trophy, Lock } from "lucide-react";
+import { Gamepad2, Blocks, Car, ChevronRight, Trophy, Lock } from "lucide-react";
 import AppHeader from "@/app/_components/AppHeader";
 import { useMyRoles } from "@/app/_components/useMyRoles";
-import { canPlayBlock, canPlayGames, gamesClosedUntil } from "@/lib/games";
+import { canPlayBlock, canPlayCar, canPlayGames, gamesClosedUntil } from "@/lib/games";
 
 type Game = {
   id: string;
@@ -40,7 +40,23 @@ const GAMES: Game[] = [
     gradient: "from-cyan-400 to-blue-600",
     swatches: ["#22d3ee", "#a855f7", "#ef4444", "#fde047"],
   },
+  {
+    id: "car",
+    name: "MASHIN",
+    desc: "Машинуудаас зайлсхийж зоос цуглуул • GIRL / BOY горим",
+    href: "/car",
+    api: "/api/games/car-girl",
+    icon: <Car size={24} className="text-white" />,
+    gradient: "from-rose-500 to-orange-500",
+    swatches: ["#ec4899", "#3b82f6", "#facc15", "#4caf50"],
+  },
 ];
+
+function canPlay(id: string, role: string | undefined) {
+  if (id === "block") return canPlayBlock(role);
+  if (id === "car") return canPlayCar(role);
+  return canPlayGames(role);
+}
 
 /** Бүх тоглоомын нэгдсэн хуудас */
 export default function GamesPage() {
@@ -48,16 +64,13 @@ export default function GamesPage() {
   const { roles } = useMyRoles();
   const [best, setBest] = useState<Record<string, number>>({});
 
-  const visible = GAMES.filter((g) =>
-    g.id === "block" ? canPlayBlock(roles?.role) : canPlayGames(roles?.role),
-  );
+  const visible = GAMES.filter((g) => canPlay(g.id, roles?.role));
   const closed = gamesClosedUntil() !== null && roles?.role !== "ADMIN";
 
   useEffect(() => {
     if (!roles) return;
     for (const g of GAMES) {
-      const ok = g.id === "block" ? canPlayBlock(roles.role) : canPlayGames(roles.role);
-      if (!ok) continue;
+      if (!canPlay(g.id, roles.role)) continue;
       fetch(g.api, { cache: "no-store" })
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => d && setBest((b) => ({ ...b, [g.id]: d.myBest ?? 0 })))

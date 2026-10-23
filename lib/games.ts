@@ -22,3 +22,10 @@ export const BLOCK_PUBLIC = true;
 export function canPlayBlock(role: string | undefined) {
   return BLOCK_PUBLIC || role === "ADMIN";
 }
+
+// MASHIN — туршилтын үед зөвхөн админд (true болговол бүгдэд нээгдэнэ).
+export const CAR_PUBLIC = false;
+
+export function canPlayCar(role: string | undefined) {
+  return CAR_PUBLIC || role === "ADMIN";
+}
