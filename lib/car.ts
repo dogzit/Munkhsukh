@@ -12,13 +12,17 @@ const CAR_H = 76;
 const PLAYER_Y = H - 120;
 const TRUCK_W = 50;
 const TRUCK_H = 132;
-// Бусад машины хурд таны аялах хурдны энэ хэсэг — бүгд ижил хурдтай тул
-// хоорондоо гүйцэлдэж 4 эгнээг хаахгүй
-const TRAFFIC = 0.45;
+// Бусад машины хурд таны аялах хурдны энэ хэсэгт (машин бүр өөр хурдтай)
+const CAR_SPEED: [number, number] = [0.3, 0.62];
+const TRUCK_SPEED: [number, number] = [0.24, 0.36];
+// Урдах машинаасаа ийм зайнд ойртвол ард нь удааширна
+const FOLLOW_GAP = 28;
 // Тоормослоход аялах хурдны энэ хэсэг хүртэл удааширна
 const BRAKE_TO = 0.25;
 // Нэг "эгнээний хана"-ны босоо зай — энэ дотор дээд тал нь 3 эгнээ эзлэгдэнэ
 const BAND_GAP = CAR_H * 1.7;
+// Тоглогчийн машины урттай ямар ч хэвтээ зурваст 4 эгнээ зэрэг хаагдахгүй
+const STRIP = CAR_H + 4;
 
 export type Mode = "girl" | "boy";
 
@@ -86,6 +90,9 @@ const PALETTES = [
 const PHASE_DIST = 6000;
 
 type Enemy = {
+  // want — хүсэх хурд, v — одоогийн хурд (урдах машинаас болж удаашарч болно)
+  want: number;
+  v: number;
   lane: number;
   x: number;
   y: number;
@@ -186,6 +193,63 @@ function burst(g: Game, x: number, y: number, colors: string[], n: number, power
   }
 }
 
+/** Тухайн машины урд (дээр) ижил эгнээнд яваа хамгийн ойрын машин */
+function leaderOf(g: Game, e: Enemy) {
+  let best: Enemy | null = null;
+  for (const o of g.enemies) {
+    if (o === e || o.y >= e.y) continue;
+    const same = o.lane === e.lane || o.toLane === e.lane || (e.toLane !== null && (o.lane === e.toLane || o.toLane === e.toLane));
+    if (same && (!best || o.y > best.y)) best = o;
+  }
+  return best;
+}
+
+/** e машин y байрлалд байхад түүнийг дайрсан STRIP өндөр зурваст 4 эгнээ бүгд хаагдах эсэх */
+function wallAt(g: Game, e: Enemy, y: number) {
+  const top = y - e.h / 2;
+  const bot = y + e.h / 2;
+  const others = g.enemies.filter((o) => o !== e && o.y + o.h / 2 > top - STRIP && o.y - o.h / 2 < bot + STRIP);
+  const all = new Set<number>([e.lane]);
+  if (e.toLane !== null) all.add(e.toLane);
+  for (const o of others) {
+    all.add(o.lane);
+    if (o.toLane !== null) all.add(o.toLane);
+  }
+  if (all.size < LANES) return false;
+  for (let t = top - STRIP; t <= bot; t += 4) {
+    const set = new Set<number>([e.lane]);
+    if (e.toLane !== null) set.add(e.toLane);
+    for (const o of others) {
+      if (o.y + o.h / 2 > t && o.y - o.h / 2 < t + STRIP) {
+        set.add(o.lane);
+        if (o.toLane !== null) set.add(o.toLane);
+      }
+    }
+    if (set.size >= LANES) return true;
+  }
+  return false;
+}
+
+/** Хажуу эгнээ рүү орох (гүйцэж түрүүлэх) — аюулгүй, 4 эгнээ хаахгүй үед л */
+function tryLaneChange(g: Game, e: Enemy, overtake: boolean) {
+  const dirs = Math.random() < 0.5 ? [-1, 1] : [1, -1];
+  for (const d of dirs) {
+    const to = e.lane + d;
+    if (to < 0 || to >= LANES) continue;
+    const blocked = g.enemies.some(
+      (o) => o !== e && (o.lane === to || o.toLane === to) && Math.abs(o.y - e.y) < (o.h + e.h) / 2 + (overtake ? 50 : 30),
+    );
+    if (blocked) continue;
+    // Эгнээ солих үедээ хуучин, шинэ хоёр эгнээг зэрэг эзэлнэ
+    const band = lanesInBand(g, e.y - e.h / 2, e.y + e.h / 2, e);
+    band.add(e.lane);
+    band.add(to);
+    if (band.size >= LANES) continue;
+    e.toLane = to;
+    return;
+  }
+}
+
 export function setBrake(g: Game, on: boolean) {
   g.braking = on && !g.over;
 }
@@ -195,11 +259,11 @@ function laneBusyNearTop(g: Game, lane: number) {
 }
 
 /** y0…y1 босоо зайд (BAND_GAP-ийн хамт) машин байгаа эгнээнүүд */
-function lanesInBand(g: Game, y0: number, y1: number, skip?: Enemy) {
+function lanesInBand(g: Game, y0: number, y1: number, skip?: Enemy, gap = BAND_GAP) {
   const set = new Set<number>();
   for (const e of g.enemies) {
     if (e === skip) continue;
-    if (e.y + e.h / 2 < y0 - BAND_GAP || e.y - e.h / 2 > y1 + BAND_GAP) continue;
+    if (e.y + e.h / 2 < y0 - gap || e.y - e.h / 2 > y1 + gap) continue;
     set.add(e.lane);
     if (e.toLane !== null) set.add(e.toLane);
   }
@@ -223,7 +287,7 @@ export function update(g: Game, dt: number) {
   const rate = g.braking ? 1100 : 520;
   g.speed += Math.sign(target - g.speed) * Math.min(Math.abs(target - g.speed), rate * dt);
   g.dist += g.speed * dt;
-  const traffic = g.cruise * TRAFFIC;
+
   g.road = (g.road + g.speed * dt) % 80;
   g.x += (laneX(g.lane) - g.x) * Math.min(1, dt * 14);
   g.invuln = Math.max(0, g.invuln - dt);
@@ -243,7 +307,7 @@ export function update(g: Game, dt: number) {
   // Шинэ машинууд — нэг "хана" дотор дээд тал нь 3 эгнээ, нэг нь үргэлж чөлөөтэй.
   // Тоормослоод бусдаас удаан явж байх үед дээрээс шинэ машин гарахгүй.
   g.spawnT -= dt;
-  if (g.spawnT <= 0 && g.speed > traffic + 30) {
+  if (g.spawnT <= 0 && g.speed > g.cruise * CAR_SPEED[1] + 30) {
     const pace = Math.max(0.55, m.startSpeed / g.cruise);
     g.spawnT = rand(m.spawnMin, m.spawnMax) * pace;
     const count = Math.random() < m.doubleChance ? 2 : 1;
@@ -256,7 +320,11 @@ export function update(g: Game, dt: number) {
       const free = [0, 1, 2, 3].filter((l) => !used.has(l) && !laneBusyNearTop(g, l));
       if (!free.length) break;
       const lane = free[Math.floor(Math.random() * free.length)];
+      const [lo, hi] = truck ? TRUCK_SPEED : CAR_SPEED;
+      const want = g.cruise * rand(lo, hi);
       g.enemies.push({
+        want,
+        v: want,
         lane,
         x: laneX(lane),
         y,
@@ -281,24 +349,62 @@ export function update(g: Game, dt: number) {
     }
   }
 
-  // Бүх машин ижил хурдтай — тоормослоход тэд урагшилж (дээшээ) холдоно
+  // 1) Хурд: машин бүр өөрийн хурдаар явна, урдах удаан машиндаа ойртвол ард нь удааширна.
+  //    BOY горимд хурдан машин хажуу эгнээ рүү орж гүйцэж түрүүлнэ.
   for (const e of g.enemies) {
-    e.y += (g.speed - traffic) * dt;
-    // BOY: зарим машин гэнэт эгнээ солино (гэхдээ 4 эгнээг хаахгүй)
-    if (m.laneChangers && !e.truck && e.toLane === null && e.y > 60 && e.y < 260 && Math.random() < dt * 0.35) {
-      const to = e.lane + (Math.random() < 0.5 ? -1 : 1);
-      if (
-        to >= 0 &&
-        to < LANES &&
-        !g.enemies.some((o) => o !== e && (o.lane === to || o.toLane === to) && Math.abs(o.y - e.y) < (o.h + e.h) / 2 + 30)
-      ) {
-        // Эгнээ солих үедээ хуучин, шинэ хоёр эгнээг зэрэг эзэлнэ
-        const band = lanesInBand(g, e.y - e.h / 2, e.y + e.h / 2, e);
-        band.add(e.lane);
-        band.add(to);
-        if (band.size < LANES) e.toLane = to;
+    e.v += Math.sign(e.want - e.v) * Math.min(Math.abs(e.want - e.v), 160 * dt);
+    const leader = leaderOf(g, e);
+    if (leader) {
+      const gap = e.y - e.h / 2 - (leader.y + leader.h / 2);
+      if (gap < FOLLOW_GAP * 2.5 && e.v > leader.v) {
+        if (m.laneChangers && e.toLane === null && !e.truck) tryLaneChange(g, e, true);
+        if (gap < FOLLOW_GAP) e.v = Math.min(e.v, leader.v);
       }
     }
+    // BOY: зарим машин гэнэт эгнээ солино
+    if (m.laneChangers && !e.truck && e.toLane === null && e.y > 60 && e.y < 260 && Math.random() < dt * 0.3) {
+      tryLaneChange(g, e, false);
+    }
+  }
+
+  // 2) Хөдөлгөөн: машин хөдөлснөөр 4 эгнээ хаагдах гэж байвал хажуугийн
+  //    машинтайгаа ижил хурдтай болж нэг эгнээг үргэлж чөлөөтэй үлдээнэ.
+  // Дээрээс доош (урдаас хойш) дарааллаар — урдах машин эхэлж хөдөлнө
+  const order = [...g.enemies].sort((a, b) => a.y - b.y);
+  const leaders = new Map(order.map((e) => [e, leaderOf(g, e)]));
+  const moved = new Map<Enemy, number>();
+  const olds = new Map(order.map((e) => [e, e.y]));
+  for (const e of order) {
+    const old = e.y;
+    let ny = old + (g.speed - e.v) * dt;
+    if (wallAt(g, e, ny)) {
+      // Өөр машинтай ижил хөдөлж үзнэ (зай нь багасахгүй) — аюулгүй хамгийн ойрыг сонгоно
+      let best: { y: number; v: number } | null = null;
+      for (const o of g.enemies) {
+        if (o === e) continue;
+        const cy = old + (moved.get(o) ?? (g.speed - o.v) * dt);
+        if (wallAt(g, e, cy)) continue;
+        if (!best || Math.abs(cy - ny) < Math.abs(best.y - ny)) best = { y: cy, v: o.v };
+      }
+      if (best) {
+        ny = best.y;
+        e.v = best.v;
+      } else if (!wallAt(g, e, old)) {
+        ny = old;
+        e.v = g.speed;
+      }
+    }
+    // Урдах машинаа хэзээ ч давхцахгүй
+    const ld = leaders.get(e);
+    if (ld) {
+      const minY = ld.y + (ld.h + e.h) / 2 + 2;
+      if (ny < minY) {
+        ny = Math.max(minY, Math.min(old, ny));
+        e.v = Math.min(e.v, ld.v);
+      }
+    }
+    e.y = ny;
+    moved.set(e, ny - old);
     if (e.toLane !== null) {
       const tx = laneX(e.toLane);
       e.x += Math.sign(tx - e.x) * Math.min(Math.abs(tx - e.x), dt * 110);
@@ -308,6 +414,13 @@ export function update(g: Game, dt: number) {
       }
     }
   }
+  // 3) Эцсийн шалгалт: дарааллаас болж хана үүссэн бол тэр машинууд өмнөх байрлалдаа үлдэнэ
+  for (let k = 0; k < 5; k++) {
+    const bad = g.enemies.filter((e) => wallAt(g, e, e.y));
+    if (!bad.length) break;
+    for (const e of k < 4 ? bad : g.enemies) e.y = olds.get(e) ?? e.y;
+  }
+
   for (const it of g.items) it.y += g.speed * dt;
 
   // Мөргөлдөөн
