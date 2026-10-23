@@ -62,10 +62,10 @@ const GAMES: Game[] = [
   },
 ];
 
-function canPlay(id: string, role: string | undefined) {
+function canPlay(id: string, role: string | undefined, name?: string) {
   if (id === "block") return canPlayBlock(role);
   if (id === "car") return canPlayCar(role);
-  if (id === "xo") return canStartXo(role);
+  if (id === "xo") return canStartXo(role, name);
   return canPlayGames(role);
 }
 
@@ -74,8 +74,14 @@ export default function GamesPage() {
   const router = useRouter();
   const { roles } = useMyRoles();
   const [best, setBest] = useState<Record<string, number>>({});
+  const [me, setMe] = useState("");
+  useEffect(() => {
+    try {
+      setMe(localStorage.getItem("name") ?? "");
+    } catch { /* */ }
+  }, []);
 
-  const visible = GAMES.filter((g) => canPlay(g.id, roles?.role));
+  const visible = GAMES.filter((g) => canPlay(g.id, roles?.role, me));
   const closed = gamesClosedUntil() !== null && roles?.role !== "ADMIN";
 
   useEffect(() => {

@@ -32,7 +32,7 @@ export async function GET(req: Request) {
     });
 
     const roles = await getMyRoles(req);
-    return NextResponse.json({ games, stats, users, canStart: canStartXo(roles?.role) });
+    return NextResponse.json({ games, stats, users, canStart: canStartXo(roles?.role, me) });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   try {
     const me = req.headers.get("x-user-name");
     const roles = await getMyRoles(req);
-    if (!me || !canStartXo(roles?.role)) {
+    if (!me || !canStartXo(roles?.role, me)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const body = (await req.json().catch(() => null)) as { opponent?: unknown } | null;

@@ -21,7 +21,7 @@ export async function GET(req: Request, { params }: Ctx) {
       select: { name: true, fullName: true, avatar: true },
     });
     const roles = await getMyRoles(req);
-    return NextResponse.json({ game, users, canStart: canStartXo(roles?.role) });
+    return NextResponse.json({ game, users, canStart: canStartXo(roles?.role, me) });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
