@@ -4,7 +4,7 @@ import { BookOpen, Clock, ArrowRight, MessageCircle, Newspaper, Users, Crown, Gr
 import { useMyRoles } from "./_components/useMyRoles";
 import { useEffect, useState } from "react";
 import BusSeatPanel from "./_components/BusSeatPanel";
-import { canPlayBlock, gamesClosedUntil } from "@/lib/games";
+import { gamesClosedUntil } from "@/lib/games";
 import { canSeeCleaning, groupIndexFor, type Roster } from "@/lib/cleaning";
 import AppHeader from "./_components/AppHeader";
 
@@ -260,7 +260,7 @@ export default function HomePage() {
             <div className="flex-1 min-w-0">
               <p className="font-black text-sm">Тоглоом</p>
               <p className="text-[10px] text-on-surface-muted">
-                {gameClosed ? "🔒 Түр хаалттай" : canPlayBlock(roles?.role) ? "2048 • BLOCK!!!" : "2048"}
+                {gameClosed ? "🔒 Түр хаалттай" : "2048 • BLOCK!!! • MASHIN"}
               </p>
             </div>
             {/* Жижиг хавтангууд */}
