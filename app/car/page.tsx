@@ -14,12 +14,13 @@ import {
   Crown,
   Loader2,
   Keyboard,
+  OctagonPause,
 } from "lucide-react";
 import AppHeader from "@/app/_components/AppHeader";
 import { useMyRoles } from "@/app/_components/useMyRoles";
 import { useGameFullscreen } from "@/app/_components/useGameFullscreen";
 import { canPlayCar } from "@/lib/games";
-import { H, MODES, W, draw, newGame, score, steer, update, type Game, type Mode } from "@/lib/car";
+import { H, MODES, W, draw, newGame, score, setBrake, steer, update, type Game, type Mode } from "@/lib/car";
 
 type Phase = "menu" | "countdown" | "playing" | "paused" | "over";
 
@@ -163,6 +164,9 @@ export default function CarPage() {
       } else if (k === "ArrowRight" || k === "d" || k === "D") {
         e.preventDefault();
         if (phase === "playing") steer(gameRef.current, 1);
+      } else if (k === "ArrowDown" || k === "s" || k === "S") {
+        e.preventDefault();
+        setBrake(gameRef.current, phase === "playing");
       } else if (k === "p" || k === "P" || k === "Escape") {
         togglePause();
       } else if (k === " ") {
@@ -171,9 +175,21 @@ export default function CarPage() {
         else if (phase === "menu") start(mode);
       }
     };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") setBrake(gameRef.current, false);
+    };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keyup", onKeyUp);
+    };
   }, [phase, mode, start, togglePause]);
+
+  // Түр зогсох, дуусах үед тоормос суллагдана
+  useEffect(() => {
+    if (phase !== "playing") setBrake(gameRef.current, false);
+  }, [phase]);
 
   // Талбарын зүүн/баруун талыг дарахад эгнээ солино
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -221,7 +237,7 @@ export default function CarPage() {
             <div className="flex justify-center">
               <div
                 className="relative rounded-3xl overflow-hidden border border-border shadow-2xl bg-black"
-                style={{ width: `min(100%, calc((100dvh - ${full ? 170 : 300}px) * ${W} / ${H}))`, minWidth: 220 }}
+                style={{ width: `min(100%, calc((100dvh - ${full ? 205 : 335}px) * ${W} / ${H}))`, minWidth: 220 }}
               >
                 <canvas
                   ref={canvasRef}
@@ -298,33 +314,35 @@ export default function CarPage() {
               </div>
             </div>
 
-            {/* Удирдлага */}
-            <div className="mt-3 grid grid-cols-[1fr_auto_auto_1fr] gap-2">
+            {/* Удирдлага: ◀ тоормос ▶, доор нь түр зогсоох, томруулах */}
+            <div className="mt-3 grid grid-cols-[1fr_1.15fr_1fr] gap-2">
               <button
                 aria-label="Зүүн"
                 onPointerDown={(e) => {
                   e.preventDefault();
                   if (phase === "playing") steer(gameRef.current, -1);
                 }}
-                className="h-14 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center active:scale-95 active:bg-card-hover"
+                className="h-24 rounded-3xl bg-surface-elevated border border-border flex items-center justify-center active:scale-95 active:bg-card-hover"
                 style={{ touchAction: "none" }}
               >
-                <ChevronLeft size={28} />
+                <ChevronLeft size={44} strokeWidth={2.5} />
               </button>
               <button
-                aria-label={phase === "paused" ? "Үргэлжлүүлэх" : "Түр зогсоох"}
-                onClick={togglePause}
-                disabled={phase !== "playing" && phase !== "paused"}
-                className="h-14 w-14 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center disabled:opacity-40 active:scale-95"
+                aria-label="Тоормос"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  setBrake(gameRef.current, phase === "playing");
+                }}
+                onPointerUp={() => setBrake(gameRef.current, false)}
+                onPointerCancel={() => setBrake(gameRef.current, false)}
+                onLostPointerCapture={() => setBrake(gameRef.current, false)}
+                onContextMenu={(e) => e.preventDefault()}
+                className="h-24 rounded-3xl bg-red-500/15 border border-red-500/40 text-red-400 flex flex-col items-center justify-center gap-0.5 active:scale-95 active:bg-red-500/30"
+                style={{ touchAction: "none" }}
               >
-                {phase === "paused" ? <Play size={18} /> : <Pause size={18} />}
-              </button>
-              <button
-                aria-label={full ? "Жижигрүүлэх" : "Дэлгэц дүүргэх"}
-                onClick={toggleFull}
-                className="h-14 w-14 rounded-2xl bg-accent/15 border border-accent/40 text-accent flex items-center justify-center active:scale-95"
-              >
-                {full ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                <OctagonPause size={34} />
+                <span className="text-xs font-black">ТООРМОС</span>
               </button>
               <button
                 aria-label="Баруун"
@@ -332,14 +350,33 @@ export default function CarPage() {
                   e.preventDefault();
                   if (phase === "playing") steer(gameRef.current, 1);
                 }}
-                className="h-14 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center active:scale-95 active:bg-card-hover"
+                className="h-24 rounded-3xl bg-surface-elevated border border-border flex items-center justify-center active:scale-95 active:bg-card-hover"
                 style={{ touchAction: "none" }}
               >
-                <ChevronRight size={28} />
+                <ChevronRight size={44} strokeWidth={2.5} />
+              </button>
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button
+                aria-label={phase === "paused" ? "Үргэлжлүүлэх" : "Түр зогсоох"}
+                onClick={togglePause}
+                disabled={phase !== "playing" && phase !== "paused"}
+                className="h-10 rounded-xl bg-surface-elevated border border-border flex items-center justify-center gap-1.5 text-xs font-bold disabled:opacity-40 active:scale-95"
+              >
+                {phase === "paused" ? <Play size={15} /> : <Pause size={15} />}
+                {phase === "paused" ? "Үргэлжлүүлэх" : "Зогсоох"}
+              </button>
+              <button
+                aria-label={full ? "Жижигрүүлэх" : "Дэлгэц дүүргэх"}
+                onClick={toggleFull}
+                className="h-10 rounded-xl bg-accent/15 border border-accent/40 text-accent flex items-center justify-center gap-1.5 text-xs font-bold active:scale-95"
+              >
+                {full ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+                {full ? "Жижиг" : "Томруулах"}
               </button>
             </div>
             <p className="mt-2.5 text-center text-[11px] text-on-surface-muted [@media(pointer:fine)]:hidden">
-              Талбарын зүүн/баруун талыг дарж эгнээ соль • 🪙 зоос, 🛡️ бамбай цуглуул
+              Талбарын зүүн/баруун талыг дарж эгнээ соль • 🛑 Тоормосыг дарж байвал удааширна
             </p>
 
             {!full && (
@@ -352,8 +389,9 @@ export default function CarPage() {
                   {([
                     [["←", "A"], "Зүүн"],
                     [["→", "D"], "Баруун"],
-                    [["Space"], "Эхлэх"],
+                    [["↓", "S"], "Тоормос"],
                     [["P", "Esc"], "Түр зогсоох"],
+                    [["Space"], "Эхлэх"],
                   ] as [string[], string][]).map(([keys, label]) => (
                     <li key={label} className="flex items-center justify-between gap-2">
                       <span className="text-xs text-on-surface-muted">{label}</span>
