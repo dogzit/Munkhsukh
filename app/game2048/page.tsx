@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Gamepad2, RotateCcw, Trophy, Crown, Loader2, Lock } from "lucide-react";
+import { Gamepad2, RotateCcw, Trophy, Crown, Loader2, Lock, Maximize2, Minimize2 } from "lucide-react";
+import { useGameFullscreen } from "@/app/_components/useGameFullscreen";
 import AppHeader from "@/app/_components/AppHeader";
 import { useMyRoles } from "@/app/_components/useMyRoles";
 import { canPlayGames, gamesClosedUntil } from "@/lib/games";
@@ -188,6 +189,7 @@ export default function Game2048Page() {
   const router = useRouter();
   const { roles } = useMyRoles();
   const allowed = canPlayGames(roles?.role);
+  const { full, toggle: toggleFull, exit: exitFull } = useGameFullscreen();
   const isAdmin = roles?.role === "ADMIN";
   // Админ түр хаасан эсэх — цаг болоход өөрөө нээгдэнэ
   const [closedUntil, setClosedUntil] = useState<number | null>(() => gamesClosedUntil());
@@ -388,7 +390,11 @@ export default function Game2048Page() {
   const at = (i: number) => `${GAP + i * (CELL + GAP)}%`;
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface font-sans">
+    <div
+      className={`${full ? "fixed inset-0 z-[100] overflow-y-auto overscroll-none" : "min-h-screen"}
+        bg-surface text-on-surface font-sans select-none [-webkit-touch-callout:none]`}
+      style={{ WebkitUserSelect: "none", WebkitTapHighlightColor: "transparent" }}
+    >
       <style>{`
         @keyframes tile-pop { 0% { transform: scale(0.4); opacity: 0 } 100% { transform: scale(1); opacity: 1 } }
         @keyframes tile-merge { 0% { transform: scale(1) } 45% { transform: scale(1.14) } 100% { transform: scale(1) } }
@@ -396,7 +402,7 @@ export default function Game2048Page() {
         .tile-merged { animation: tile-merge 180ms ease-out 80ms }
       `}</style>
 
-      <AppHeader
+      {!full && <AppHeader
         title="2048"
         subtitle="Ижил тоог нийлүүл"
         icon={
@@ -404,7 +410,18 @@ export default function Game2048Page() {
             <Gamepad2 size={15} className="text-white" />
           </span>
         }
-      />
+      />}
+      {full && (
+        <div className="flex items-center justify-between gap-3 px-3 pt-[calc(env(safe-area-inset-top)+10px)] pb-1">
+          <p className="text-lg font-black">2048</p>
+          <button
+            onClick={exitFull}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-elevated border border-border text-xs font-bold active:scale-95"
+          >
+            <Minimize2 size={14} /> Жижигрүүлэх
+          </button>
+        </div>
+      )}
 
       <div className="px-3 py-4 sm:p-6">
         <div className="max-w-md lg:max-w-4xl mx-auto lg:flex lg:items-start lg:gap-6">
@@ -431,6 +448,14 @@ export default function Game2048Page() {
               >
                 <RotateCcw size={16} />
                 Шинэ
+              </button>
+              <button
+                onClick={toggleFull}
+                aria-label={full ? "Жижигрүүлэх" : "Дэлгэц дүүргэх"}
+                className="px-3 rounded-2xl bg-surface-elevated border border-border font-black text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95"
+              >
+                {full ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                {full ? "Жижиг" : "Том"}
               </button>
             </div>
 
@@ -514,7 +539,7 @@ export default function Game2048Page() {
             </p>
           </div>
 
-          <div className="mt-6 lg:mt-0 lg:w-80 lg:shrink-0 space-y-4">
+          {!full && <div className="mt-6 lg:mt-0 lg:w-80 lg:shrink-0 space-y-4">
           {/* Цолнууд — хүрсэн цол тод, хүрээгүй нь бүдэг */}
           <aside className="bg-surface-elevated border border-border rounded-3xl p-4 shadow-2xl">
             <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-on-surface-muted font-semibold mb-3">
@@ -589,7 +614,7 @@ export default function Game2048Page() {
               </ol>
             )}
           </aside>
-          </div>
+          </div>}
         </div>
       </div>
     </div>

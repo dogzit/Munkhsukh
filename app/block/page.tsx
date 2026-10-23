@@ -16,7 +16,10 @@ import {
   Crown,
   Loader2,
   Keyboard,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
+import { useGameFullscreen } from "@/app/_components/useGameFullscreen";
 import AppHeader from "@/app/_components/AppHeader";
 import { useMyRoles } from "@/app/_components/useMyRoles";
 import { canPlayBlock } from "@/lib/games";
@@ -124,6 +127,7 @@ export default function BlockPage() {
   const router = useRouter();
   const { roles } = useMyRoles();
   const allowed = canPlayBlock(roles?.role);
+  const { full, toggle: toggleFull, exit: exitFull } = useGameFullscreen();
 
   const [s, dispatch] = useReducer(reducer, undefined, () => fresh(false));
   const [myBest, setMyBest] = useState(0);
@@ -254,7 +258,11 @@ export default function BlockPage() {
   const nextShape = SHAPES[s.next].filter((row) => row.some(Boolean));
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface font-sans">
+    <div
+      className={`${full ? "fixed inset-0 z-[100] overflow-y-auto overscroll-none" : "min-h-screen"}
+        bg-surface text-on-surface font-sans select-none [-webkit-touch-callout:none]`}
+      style={{ WebkitUserSelect: "none", WebkitTapHighlightColor: "transparent" }}
+    >
       <style>{`
         @keyframes block-clear {
           0% { filter: brightness(1); transform: scale(1); }
@@ -290,7 +298,7 @@ export default function BlockPage() {
         }
         .block-shake { animation: block-shake 360ms ease-in-out; }
       `}</style>
-      <AppHeader
+      {!full && <AppHeader
         title="BLOCK!!!"
         subtitle="Мөрөө дүүргэж устга"
         icon={
@@ -298,7 +306,18 @@ export default function BlockPage() {
             <Blocks size={15} className="text-white" />
           </span>
         }
-      />
+      />}
+      {full && (
+        <div className="flex items-center justify-between gap-3 px-3 pt-[calc(env(safe-area-inset-top)+10px)] pb-1">
+          <p className="text-lg font-black">BLOCK!!!</p>
+          <button
+            onClick={exitFull}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-elevated border border-border text-xs font-bold active:scale-95"
+          >
+            <Minimize2 size={14} /> Жижигрүүлэх
+          </button>
+        </div>
+      )}
 
       <div className="px-3 py-3 sm:p-6">
         <div className="max-w-md lg:max-w-4xl mx-auto lg:flex lg:items-start lg:gap-6">
@@ -315,7 +334,7 @@ export default function BlockPage() {
                   className={`relative aspect-[1/2] rounded-2xl bg-surface-elevated border border-border p-1 shadow-2xl select-none ${
                     s.popup?.lines === 4 ? "block-shake" : ""
                   }`}
-                  style={{ width: "min(100%, calc((100dvh - 330px) / 2))", minWidth: 180, touchAction: "none" }}
+                  style={{ width: `min(100%, calc((100dvh - ${full ? 200 : 330}px) / 2))`, minWidth: 180, touchAction: "none" }}
                 >
                   <div className="grid h-full gap-[2px]" style={{ gridTemplateColumns: `repeat(${COLS}, 1fr)` }}>
                     {view.map((k, i) => (
@@ -428,6 +447,14 @@ export default function BlockPage() {
                   >
                     <RotateCcw size={15} />
                   </button>
+                  <button
+                    onClick={toggleFull}
+                    aria-label={full ? "Жижигрүүлэх" : "Дэлгэц дүүргэх"}
+                    className="col-span-2 h-10 rounded-xl bg-accent/15 border border-accent/40 text-accent flex items-center justify-center gap-1.5 text-[11px] font-black active:scale-95"
+                  >
+                    {full ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                    {full ? "Жижиг" : "Томруулах"}
+                  </button>
                 </div>
               </div>
             </div>
@@ -455,7 +482,7 @@ export default function BlockPage() {
             </p>
 
             {/* MacBook / notebook-ийн товчлуурууд — хулганатай төхөөрөмжид харагдана */}
-            <div className="mt-3 hidden [@media(pointer:fine)]:block bg-surface-elevated border border-border rounded-3xl p-4">
+            <div className={`mt-3 hidden ${full ? "" : "[@media(pointer:fine)]:block"} bg-surface-elevated border border-border rounded-3xl p-4`}>
               <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-on-surface-muted font-semibold mb-3">
                 <Keyboard size={14} className="text-cyan-400" />
                 Товчлуурууд
@@ -484,7 +511,7 @@ export default function BlockPage() {
           </div>
 
           {/* Ангийн рекорд */}
-          <aside className="mt-5 lg:mt-0 lg:w-80 lg:shrink-0 bg-surface-elevated border border-border rounded-3xl p-4 shadow-2xl">
+          {!full && <aside className="mt-5 lg:mt-0 lg:w-80 lg:shrink-0 bg-surface-elevated border border-border rounded-3xl p-4 shadow-2xl">
             <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-on-surface-muted font-semibold mb-3">
               <Trophy size={14} className="text-amber-400" />
               Ангийн рекорд
@@ -523,7 +550,7 @@ export default function BlockPage() {
                 ))}
               </ol>
             )}
-          </aside>
+          </aside>}
         </div>
       </div>
     </div>
