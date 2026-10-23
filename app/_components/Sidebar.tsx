@@ -52,7 +52,7 @@ const COLLAPSED_KEY = "sidebar_collapsed";
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
-  if (href === "/games") return ["/games", "/game2048", "/block", "/car"].some((p) => pathname.startsWith(p));
+  if (href === "/games") return ["/games", "/game2048", "/block", "/car", "/xo"].some((p) => pathname.startsWith(p));
   return pathname === href || pathname.startsWith(href + "/");
 }
 

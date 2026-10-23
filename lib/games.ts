@@ -29,3 +29,10 @@ export const CAR_PUBLIC = true;
 export function canPlayCar(role: string | undefined) {
   return CAR_PUBLIC || role === "ADMIN";
 }
+
+// X O тулаан — туршилтын үед зөвхөн админ тулаан эхлүүлнэ (дуудагдсан хүн өөрийн тулаандаа орж чадна).
+export const XO_PUBLIC = false;
+
+export function canStartXo(role: string | undefined) {
+  return XO_PUBLIC || role === "ADMIN";
+}

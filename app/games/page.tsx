@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Gamepad2, Blocks, Car, ChevronRight, Trophy, Lock } from "lucide-react";
+import { Gamepad2, Blocks, Car, Swords, ChevronRight, Trophy, Lock } from "lucide-react";
 import AppHeader from "@/app/_components/AppHeader";
 import { useMyRoles } from "@/app/_components/useMyRoles";
-import { canPlayBlock, canPlayCar, canPlayGames, gamesClosedUntil } from "@/lib/games";
+import { canPlayBlock, canPlayCar, canPlayGames, canStartXo, gamesClosedUntil } from "@/lib/games";
 
 type Game = {
   id: string;
@@ -50,11 +50,22 @@ const GAMES: Game[] = [
     gradient: "from-rose-500 to-orange-500",
     swatches: ["#ec4899", "#3b82f6", "#facc15", "#4caf50"],
   },
+  {
+    id: "xo",
+    name: "X O тулаан",
+    desc: "Анги нэгнээ тулаанд дуудаж ээлжээр тогло",
+    href: "/xo",
+    api: "",
+    icon: <Swords size={24} className="text-white" />,
+    gradient: "from-rose-500 to-sky-500",
+    swatches: ["#f43f5e", "#0ea5e9", "#0ea5e9", "#f43f5e"],
+  },
 ];
 
 function canPlay(id: string, role: string | undefined) {
   if (id === "block") return canPlayBlock(role);
   if (id === "car") return canPlayCar(role);
+  if (id === "xo") return canStartXo(role);
   return canPlayGames(role);
 }
 
@@ -70,7 +81,7 @@ export default function GamesPage() {
   useEffect(() => {
     if (!roles) return;
     for (const g of GAMES) {
-      if (!canPlay(g.id, roles.role)) continue;
+      if (!g.api || !canPlay(g.id, roles.role)) continue;
       fetch(g.api, { cache: "no-store" })
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => d && setBest((b) => ({ ...b, [g.id]: d.myBest ?? 0 })))
@@ -121,6 +132,10 @@ export default function GamesPage() {
                       {locked ? (
                         <span className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
                           <Lock size={12} /> Түр хаалттай
+                        </span>
+                      ) : !g.api ? (
+                        <span className="flex items-center gap-1.5 text-xs font-bold text-on-surface-muted">
+                          <Swords size={12} className="text-rose-400" /> 2 хүний тоглоом
                         </span>
                       ) : (
                         <span className="flex items-center gap-1.5 text-xs font-bold text-on-surface-muted">

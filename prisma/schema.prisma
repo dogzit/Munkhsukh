@@ -355,3 +355,23 @@ model CleaningRoster {
   lastNotified String?
   updatedAt    DateTime @updatedAt
 }
+
+// --- X O тулаан (нэг нь нөгөөгөө дуудна, зөвшөөрвөл ээлжээр тоглоно) ---
+model XoGame {
+  id         String   @id @default(nanoid())
+  // Дуудсан хүн — үргэлж X, эхэлж нүүнэ
+  challenger String
+  opponent   String
+  // PENDING | ACTIVE | DONE | DECLINED | CANCELLED
+  status     String   @default("PENDING")
+  // 9 тэмдэгт: "." хоосон, "X", "O"
+  board      String   @default(".........")
+  turn       String?
+  // Ялагчийн нэр, тэнцвэл "DRAW"
+  winner     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([challenger, status])
+  @@index([opponent, status])
+}
