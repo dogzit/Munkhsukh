@@ -19,6 +19,7 @@ import {
   Crown,
   Star,
   GraduationCap,
+  Trash2,
 } from "lucide-react";
 import Skeleton from "@/app/_components/Skeleton";
 import { BRANCHES } from "@/lib/branches";
@@ -114,6 +115,29 @@ export default function AdminUsersPage() {
         ? `${u.fullName || u.name} салааны даргаас чөлөөлөгдлөө`
         : `${u.fullName || u.name} ${u.branch}-р салааны дарга боллоо ⭐`,
     );
+
+  // Ангиас шилжсэн гэх мэт сурагчийг бүрмөсөн устгана
+  const removeUser = async (u: AdminUser) => {
+    if (toggling) return;
+    const label = u.fullName || u.name;
+    if (!confirm(`${label} (@${u.name})-ыг сайтаас бүрмөсөн устгах уу?\n\nБүртгэл, тоглоомын оноо, мэдэгдэл, цэвэрлэгээний бүлгээс хасагдана. Буцаах боломжгүй.`)) return;
+    setToggling(u.name);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: u.name }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error);
+      setUsers((prev) => prev.filter((x) => x.name !== u.name));
+      toast.success(`${label} устгагдлаа`);
+    } catch (e) {
+      toast.error((e as Error).message || "Устгаж чадсангүй");
+    } finally {
+      setToggling(null);
+    }
+  };
 
   const decide = async (u: AdminUser, action: "approve" | "decline") => {
     if (deciding) return;
@@ -373,7 +397,7 @@ export default function AdminUsersPage() {
                         disabled={busy || isMe}
                         aria-label="Эрх"
                         title={isMe ? "Өөрийн эрхийг өөрчлөх боломжгүй" : undefined}
-                        className="bg-surface-alt border border-border rounded-lg px-2 py-1.5 text-xs font-bold text-on-surface outline-none disabled:opacity-50"
+                        className="w-[7.5rem] sm:w-auto bg-surface-alt border border-border rounded-lg px-2 py-1.5 text-xs font-bold text-on-surface outline-none disabled:opacity-50"
                       >
                         <option value="USER">Хэрэглэгч</option>
                         <option value="HOMEWORK" disabled={u.role !== "HOMEWORK" && homeworkCount >= 3}>
@@ -396,6 +420,16 @@ export default function AdminUsersPage() {
                       <Star size={10} className={u.branchLeader ? "fill-sky-400" : ""} />
                       Салааны дарга
                     </button>
+                    {!isMe && u.role !== "ADMIN" && (
+                      <button
+                        onClick={() => removeUser(u)}
+                        disabled={busy}
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-all active:scale-95 disabled:opacity-40"
+                      >
+                        <Trash2 size={10} />
+                        Устгах
+                      </button>
+                    )}
                   </div>
                 </div>
               );

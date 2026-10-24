@@ -145,3 +145,64 @@ export async function PATCH(req: NextRequest) {
     });
   }
 }
+
+/**
+ * DELETE /api/admin/users
+ * Body: { name: string }
+ * Хэрэглэгчийг бүрмөсөн устгана (жишээ нь ангиас шилжсэн сурагч).
+ * Өөрийгөө болон админыг устгахгүй. Чатын мессеж түүх болж үлдэнэ.
+ */
+export async function DELETE(req: NextRequest) {
+  try {
+    if (!(await isAdmin(req))) {
+      return NextResponse.json({ error: "Unauthorized" } satisfies ApiError, { status: 401 });
+    }
+    const body = (await req.json().catch(() => null)) as { name?: unknown } | null;
+    const name = body && typeof body.name === "string" ? body.name.trim() : "";
+    if (!name) {
+      return NextResponse.json({ error: "name required" } satisfies ApiError, { status: 400 });
+    }
+    if (name === req.headers.get("x-user-name")) {
+      return NextResponse.json({ error: "Өөрийгөө устгах боломжгүй" } satisfies ApiError, { status: 400 });
+    }
+    const user = await prisma.user.findUnique({ where: { name }, select: { role: true } });
+    if (!user) {
+      return NextResponse.json({ error: "Not found" } satisfies ApiError, { status: 404 });
+    }
+    if (user.role === "ADMIN" || name.toLowerCase() === "admin") {
+      return NextResponse.json(
+        { error: "Админыг устгах боломжгүй. Эхлээд эрхийг нь хасна уу" } satisfies ApiError,
+        { status: 400 },
+      );
+    }
+
+    // Нэрээр холбогдсон (cascade-гүй) өгөгдлийг цэвэрлэнэ
+    const roster = await prisma.cleaningRoster.findUnique({ where: { id: "main" } });
+    await prisma.$transaction([
+      prisma.hworkCheck.deleteMany({ where: { userName: name } }),
+      prisma.notification.deleteMany({ where: { userName: name } }),
+      prisma.gameScore.deleteMany({ where: { userName: name } }),
+      prisma.xoGame.deleteMany({
+        where: { status: { in: ["PENDING", "ACTIVE"] }, OR: [{ challenger: name }, { opponent: name }] },
+      }),
+      ...(roster && Array.isArray(roster.groups)
+        ? [
+            prisma.cleaningRoster.update({
+              where: { id: "main" },
+              data: {
+                groups: (roster.groups as unknown[]).map((g) =>
+                  Array.isArray(g) ? g.filter((x) => x !== name) : [],
+                ),
+              },
+            }),
+          ]
+        : []),
+      prisma.user.delete({ where: { name } }),
+    ]);
+
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ error: "Server error" } satisfies ApiError, { status: 500 });
+  }
+}
