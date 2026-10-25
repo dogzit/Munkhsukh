@@ -39,6 +39,7 @@ import {
   reducer,
   speedFor,
   type Action,
+  type State,
   type Kind,
 } from "@/lib/block";
 import { sameName } from "@/lib/names";
@@ -156,13 +157,29 @@ function Cell({ k, ghost, clearing, col }: { k: Kind | null; ghost?: Kind | null
   );
 }
 
+const BLOCK_SAVE_KEY = "block-save-v1";
+
+/** Хадгалсан тоглоомоо унших — эвдэрсэн/дууссан бол хоосон эхлэл буцаана */
+function loadSaved(): State {
+  try {
+    const raw = localStorage.getItem(BLOCK_SAVE_KEY);
+    if (!raw) return fresh(false);
+    const saved = JSON.parse(raw) as State;
+    if (!saved.started || saved.over) return fresh(false);
+    // Дэлгэц дахин ачаалахад тоглоом гэнэт үргэлжлэхгүй — түр зогссон хэвээр нээгдэнэ
+    return { ...saved, paused: true, clearing: null };
+  } catch {
+    return fresh(false);
+  }
+}
+
 export default function BlockPage() {
   const router = useRouter();
   const { roles } = useMyRoles();
   const allowed = canPlayBlock(roles?.role);
   const { full, toggle: toggleFull, exit: exitFull } = useGameFullscreen();
 
-  const [s, dispatch] = useReducer(reducer, undefined, () => fresh(false));
+  const [s, dispatch] = useReducer(reducer, undefined, loadSaved);
   const [myBest, setMyBest] = useState(0);
   const [top, setTop] = useState<TopRow[] | null>(null);
   const [me, setMe] = useState("");
@@ -233,6 +250,14 @@ export default function BlockPage() {
       .then(() => loadTop())
       .catch(() => {});
   }, [s.over, s.score, s.lines, allowed, loadTop]);
+
+  // Pause хийгээд хуудаснаас гарсан ч, буцаж ороход яг тэр байдлаараа үргэлжилнэ
+  useEffect(() => {
+    try {
+      if (s.started && !s.over) localStorage.setItem(BLOCK_SAVE_KEY, JSON.stringify(s));
+      else localStorage.removeItem(BLOCK_SAVE_KEY);
+    } catch { /* */ }
+  }, [s]);
 
   // Гар: үйлдлийн системийн удаан давталтын оронд Tetris шиг DAS/ARR
   const keyTimers = useRef(new Map<string, { t?: ReturnType<typeof setTimeout>; i?: ReturnType<typeof setInterval> }>());
@@ -517,19 +542,24 @@ export default function BlockPage() {
                     <p className={`text-base font-black tabular-nums truncate ${label === "Рекорд" ? "text-amber-400" : ""}`}>{v}</p>
                   </div>
                 ))}
-                <div className="grid grid-cols-2 gap-1.5">
+                <div className="grid grid-cols-[1fr_auto] gap-3">
                   <button
                     onClick={() => dispatch({ type: "pause" })}
                     disabled={!s.started || s.over}
                     aria-label={s.paused ? "Үргэлжлүүлэх" : "Түр зогсоох"}
-                    className="h-10 rounded-xl bg-surface-elevated border border-border flex items-center justify-center disabled:opacity-40 active:scale-95"
+                    className="h-10 rounded-xl bg-surface-elevated border border-border flex items-center justify-center gap-1.5 text-xs font-bold disabled:opacity-40 active:scale-95"
                   >
                     {s.paused ? <Play size={15} /> : <Pause size={15} />}
+                    {s.paused ? "Үргэлжлүүлэх" : "Түр зогсоох"}
                   </button>
                   <button
-                    onClick={() => dispatch({ type: "start" })}
+                    onClick={() => {
+                      // Тоглоом явж байхад санаандгүй дарж рекордоо алдахаас хамгаална
+                      if (s.started && !s.over && !confirm("Одоогийн тоглоомоо шинээр эхлэх үү?")) return;
+                      dispatch({ type: "start" });
+                    }}
                     aria-label="Шинээр эхлэх"
-                    className="h-10 rounded-xl bg-surface-elevated border border-border flex items-center justify-center active:scale-95"
+                    className="h-10 w-10 rounded-xl bg-surface-elevated border border-border flex items-center justify-center active:scale-95"
                   >
                     <RotateCcw size={15} />
                   </button>

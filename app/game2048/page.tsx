@@ -332,6 +332,12 @@ export default function Game2048Page() {
     setOver(false);
   };
 
+  // "Шинэ" товчийг зөвхөн тоглоом явж байхад санаандгүй дарахаас хамгаална
+  const restartWithConfirm = () => {
+    if (!over && score > 0 && !confirm("Одоогийн тоглоомоо үргэлжлүүлэхгүйгээр шинээр эхлэх үү?")) return;
+    restart();
+  };
+
   const onTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0];
     touch.current = { x: t.clientX, y: t.clientY };
@@ -444,7 +450,7 @@ export default function Game2048Page() {
                 <p className="text-[10px] text-on-surface-muted tabular-nums">{myBest} оноо</p>
               </div>
               <button
-                onClick={restart}
+                onClick={restartWithConfirm}
                 className="px-3 rounded-2xl bg-accent text-white font-black text-xs flex flex-col items-center justify-center gap-0.5 hover:opacity-90 active:scale-95"
               >
                 <RotateCcw size={16} />
@@ -510,26 +516,32 @@ export default function Game2048Page() {
               ))}
 
               {(over || showWin) && (
-                <div className="absolute inset-0 z-10 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 p-6 text-center">
+                <div
+                  className="absolute inset-0 z-10 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 p-6 text-center"
+                  // Аварга болсон мэдэгдлийг хаахаар санаандгүй дарахад тоглоом дахин эхлэхгүйн тулд
+                  // энэ давхаргыг дарахад юу ч болохгүй — зөвхөн доорх товчнууд ажиллана
+                  onClick={showWin ? () => setShowWin(false) : undefined}
+                >
                   <p className="text-3xl font-black text-white">
                     {showWin ? "2048! 🎉" : "Тоглоом дууслаа"}
                   </p>
                   <p className="text-sm text-white/80">Оноо: <b className="text-amber-300">{score}</b></p>
                   <div className="flex gap-2">
-                    {showWin && (
+                    {showWin ? (
                       <button
-                        onClick={() => setShowWin(false)}
-                        className="px-4 py-2.5 rounded-2xl bg-amber-400 text-amber-950 font-black text-sm active:scale-95"
+                        onClick={(e) => { e.stopPropagation(); setShowWin(false); }}
+                        className="px-6 py-2.5 rounded-2xl bg-amber-400 text-amber-950 font-black text-sm active:scale-95"
                       >
                         Үргэлжлүүлэх
                       </button>
+                    ) : (
+                      <button
+                        onClick={restart}
+                        className="px-4 py-2.5 rounded-2xl bg-white text-black font-black text-sm active:scale-95"
+                      >
+                        Дахин тоглох
+                      </button>
                     )}
-                    <button
-                      onClick={restart}
-                      className="px-4 py-2.5 rounded-2xl bg-white text-black font-black text-sm active:scale-95"
-                    >
-                      Дахин тоглох
-                    </button>
                   </div>
                 </div>
               )}
