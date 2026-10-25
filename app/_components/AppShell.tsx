@@ -8,6 +8,7 @@ import RefreshButton from "./RefreshButton";
 import NotificationBell from "./NotificationBell";
 import MobileAdminPill from "./MobileAdminPill";
 import PushPrompt from "./PushPrompt";
+import LiveAlerts from "./LiveAlerts";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -37,6 +38,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <MobileNav />
       <MobileAdminPill />
       {!isAdminPage && <PushPrompt />}
+      <LiveAlerts />
 
       {showFloatingActions && (
         <div className="fixed top-2.5 right-2.5 sm:top-4 sm:right-4 z-50 flex items-center gap-1.5 sm:gap-2">

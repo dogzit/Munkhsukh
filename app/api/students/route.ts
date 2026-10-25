@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { isOnline } from "@/lib/presence";
 
 /**
  * GET /api/students
@@ -17,10 +18,12 @@ export async function GET() {
         role: true,
         branch: true,
         branchLeader: true,
+        lastSeen: true,
       },
     });
     users.sort((a, b) => (a.fullName || a.name).localeCompare(b.fullName || b.name, "mn"));
-    return NextResponse.json(users);
+    const now = Date.now();
+    return NextResponse.json(users.map(({ lastSeen, ...u }) => ({ ...u, online: isOnline(lastSeen, now) })));
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

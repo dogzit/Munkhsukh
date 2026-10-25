@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { getMyRoles } from "@/lib/roles";
 import { canStartXo } from "@/lib/games";
+import { onlineSince } from "@/lib/presence";
 import { displayName, xoNotify } from "@/lib/xoNotify";
 import { NextResponse, after } from "next/server";
 
@@ -31,8 +32,13 @@ export async function GET(req: Request) {
       select: { name: true, fullName: true, avatar: true },
     });
 
+    // Яг одоо сайтад байгаа хүмүүс (дуудах жагсаалтад "Идэвхтэй" гэж харагдана)
+    const online = (
+      await prisma.user.findMany({ where: { lastSeen: { gte: onlineSince() } }, select: { name: true } })
+    ).map((u) => u.name);
+
     const roles = await getMyRoles(req);
-    return NextResponse.json({ me, games, stats, users, canStart: canStartXo(roles?.role, me) });
+    return NextResponse.json({ me, online, games, stats, users, canStart: canStartXo(roles?.role, me) });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

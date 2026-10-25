@@ -19,19 +19,22 @@ type XoGame = {
 };
 type Data = {
   me: string;
+  online: string[];
   games: XoGame[];
   stats: { win: number; draw: number; loss: number };
   users: U[];
   canStart: boolean;
 };
 
-function Avatar({ u, size = 36 }: { u?: U; size?: number }) {
+function Avatar({ u, size = 36, online = false }: { u?: U; size?: number; online?: boolean }) {
   return (
-    <span
-      className="rounded-full overflow-hidden bg-accent/15 flex items-center justify-center text-accent text-xs font-black shrink-0"
-      style={{ width: size, height: size }}
-    >
-      {u?.avatar ? <img src={u.avatar} alt="" className="w-full h-full object-cover" /> : (u?.fullName || u?.name || "?")[0]?.toUpperCase()}
+    <span className="relative shrink-0" style={{ width: size, height: size }}>
+      <span className="w-full h-full rounded-full overflow-hidden bg-accent/15 flex items-center justify-center text-accent text-xs font-black">
+        {u?.avatar ? <img src={u.avatar} alt="" className="w-full h-full object-cover" /> : (u?.fullName || u?.name || "?")[0]?.toUpperCase()}
+      </span>
+      {online && (
+        <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-surface-elevated" />
+      )}
     </span>
   );
 }
@@ -141,15 +144,17 @@ export default function XoLobby() {
   const busyWith = new Set(
     games.filter((g) => g.status === "PENDING" || g.status === "ACTIVE").map((g) => (g.challenger === me ? g.opponent : g.challenger)),
   );
-  const candidates = students.filter(
-    (s) => s.name !== me && (!q.trim() || (s.fullName || s.name).toLowerCase().includes(q.trim().toLowerCase())),
-  );
+  const online = new Set(data?.online ?? []);
+  // Идэвхтэй хүмүүс эхэнд
+  const candidates = students
+    .filter((s) => s.name !== me && (!q.trim() || (s.fullName || s.name).toLowerCase().includes(q.trim().toLowerCase())))
+    .sort((a, b) => Number(online.has(b.name)) - Number(online.has(a.name)));
 
   const Row = ({ g, right }: { g: XoGame; right: React.ReactNode }) => {
     const other = g.challenger === me ? g.opponent : g.challenger;
     return (
       <div className="flex items-center gap-3 rounded-2xl bg-surface-alt/50 border border-border-subtle px-3 py-2.5">
-        <Avatar u={userMap.get(other)} />
+        <Avatar u={userMap.get(other)} online={online.has(other)} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold truncate">{nameOf(other)}</p>
           <p className="text-[10px] text-on-surface-muted">Чи: {g.challenger === me ? "X" : "O"}</p>
@@ -288,8 +293,13 @@ export default function XoLobby() {
                       const engaged = busyWith.has(s.name);
                       return (
                         <div key={s.name} className="flex items-center gap-3 rounded-2xl px-2 py-1.5 hover:bg-card-hover">
-                          <Avatar u={s} size={32} />
-                          <span className="flex-1 min-w-0 text-sm font-bold truncate">{s.fullName || s.name}</span>
+                          <Avatar u={s} size={32} online={online.has(s.name)} />
+                          <span className="flex-1 min-w-0">
+                            <span className="block text-sm font-bold truncate">{s.fullName || s.name}</span>
+                            {online.has(s.name) && (
+                              <span className="block text-[10px] font-bold text-emerald-400 leading-tight">● Идэвхтэй</span>
+                            )}
+                          </span>
                           <button
                             onClick={() => challenge(s.name)}
                             disabled={busy === s.name}

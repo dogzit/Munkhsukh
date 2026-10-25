@@ -9,6 +9,7 @@ import { BRANCHES, branchName } from "@/lib/branches";
 
 type Student = {
   name: string;
+  online?: boolean;
   fullName: string | null;
   avatar: string | null;
   bio: string | null;
@@ -105,11 +106,16 @@ export default function StudentsPage() {
                   text-left hover:bg-card-hover hover:border-accent/30 active:scale-[0.98] transition-all"
               >
                 <span className="w-5 text-[10px] font-bold text-on-surface-muted/50 text-right shrink-0">{i + 1}</span>
-                <div className="w-11 h-11 rounded-full overflow-hidden bg-accent/15 flex items-center justify-center text-accent font-black shrink-0">
-                  {s.avatar ? (
-                    <img src={s.avatar} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    (s.fullName || s.name)[0]?.toUpperCase()
+                <div className="relative shrink-0">
+                  <div className="w-11 h-11 rounded-full overflow-hidden bg-accent/15 flex items-center justify-center text-accent font-black">
+                    {s.avatar ? (
+                      <img src={s.avatar} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      (s.fullName || s.name)[0]?.toUpperCase()
+                    )}
+                  </div>
+                  {s.online && (
+                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-surface-elevated" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -122,6 +128,7 @@ export default function StudentsPage() {
                     {s.branchLeader && <Star size={11} className="text-sky-400 fill-sky-400 shrink-0" />}
                   </p>
                   <p className="text-[10px] text-on-surface-muted truncate">
+                    {s.online && <span className="text-emerald-400 font-bold">Идэвхтэй • </span>}
                     @{s.name}
                     {s.branch ? ` • ${branchName(s.branch)}` : ""}
                     {s.bio ? ` • ${s.bio}` : ""}

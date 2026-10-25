@@ -27,6 +27,8 @@ model User {
   birthDate   DateTime?
   fullName    String?
   createdAt   DateTime     @default(now())
+  // Сайтыг нээлттэй байлгахад 12 секунд тутам шинэчлэгдэнэ ("Идэвхтэй" эсэх)
+  lastSeen    DateTime?
   Session     Session[]
   todos       Todo[]
   likes       Like[]
