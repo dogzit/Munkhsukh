@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import AppHeader from "@/app/_components/AppHeader";
 import Skeleton from "@/app/_components/Skeleton";
 import { TEACHER_CATEGORIES, teacherCategory, type TeacherCategory } from "@/lib/teacherNews";
+import { sameName } from "@/lib/names";
 
 type TeacherPost = {
   id: string;
@@ -261,7 +262,7 @@ export default function TeacherNewsPage() {
           <div className="space-y-3">
             {posts.map((p) => {
               const cat = teacherCategory(p.category);
-              const canDelete = isAdminUser || p.userName === me;
+              const canDelete = isAdminUser || sameName(p.userName, me);
               return (
                 <article key={p.id} className="rounded-3xl border border-border-subtle bg-surface-elevated overflow-hidden">
                   <div className="p-4 space-y-2">

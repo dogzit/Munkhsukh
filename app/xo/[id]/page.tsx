@@ -59,7 +59,8 @@ export default function XoGamePage({ params }: { params: Promise<{ id: string }>
         return;
       }
       if (!res.ok) return;
-      const d = (await res.json()) as { game: XoGame; users: U[]; canStart: boolean };
+      const d = (await res.json()) as { me: string; game: XoGame; users: U[]; canStart: boolean };
+      setMe(d.me);
       setGame(d.game);
       setUsers(d.users);
       setCanStart(d.canStart);
@@ -67,9 +68,6 @@ export default function XoGamePage({ params }: { params: Promise<{ id: string }>
   }, [id]);
 
   useEffect(() => {
-    try {
-      setMe(localStorage.getItem("name") ?? "");
-    } catch { /* */ }
     load();
   }, [load]);
 

@@ -18,6 +18,7 @@ type XoGame = {
   updatedAt: string;
 };
 type Data = {
+  me: string;
   games: XoGame[];
   stats: { win: number; draw: number; loss: number };
   users: U[];
@@ -57,7 +58,6 @@ export default function XoLobby() {
   const router = useRouter();
   const [data, setData] = useState<Data | null>(null);
   const [students, setStudents] = useState<U[]>([]);
-  const [me, setMe] = useState("");
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -69,9 +69,6 @@ export default function XoLobby() {
   }, []);
 
   useEffect(() => {
-    try {
-      setMe(localStorage.getItem("name") ?? "");
-    } catch { /* */ }
     load();
     const id = setInterval(load, 4000);
     return () => clearInterval(id);
@@ -90,6 +87,8 @@ export default function XoLobby() {
     for (const u of [...students, ...(data?.users ?? [])]) m.set(u.name, u);
     return m;
   }, [students, data]);
+  // Нэрийг серверээс авна (localStorage-д жижиг үсгээр хадгалагддаг тул таарахгүй)
+  const me = data?.me ?? "";
   const nameOf = (n: string) => userMap.get(n)?.fullName || n;
 
   const challenge = async (opponent: string) => {

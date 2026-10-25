@@ -7,6 +7,7 @@ import { useGameFullscreen } from "@/app/_components/useGameFullscreen";
 import AppHeader from "@/app/_components/AppHeader";
 import { useMyRoles } from "@/app/_components/useMyRoles";
 import { canPlayGames, gamesClosedUntil } from "@/lib/games";
+import { sameName } from "@/lib/names";
 
 type Tile = {
   id: number;
@@ -582,7 +583,7 @@ export default function Game2048Page() {
             ) : (
               <ol className="space-y-1.5">
                 {top.map((r, i) => {
-                  const mine = r.userName === me;
+                  const mine = sameName(r.userName, me);
                   return (
                     <li
                       key={r.userName}

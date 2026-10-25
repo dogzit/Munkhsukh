@@ -1,3 +1,5 @@
+import { sameName } from "@/lib/names";
+
 // Тоглоомын хэсэг — бүх хэрэглэгчид нээлттэй (false бол зөвхөн админ).
 export const GAMES_PUBLIC = true;
 
@@ -32,9 +34,9 @@ export function canPlayCar(role: string | undefined) {
 
 // X O тулаан — туршилтын үед зөвхөн админ болон XO_TESTERS тулаан эхлүүлнэ
 // (дуудагдсан хүн өөрийн тулаандаа орж чадна).
-export const XO_PUBLIC = false;
+export const XO_PUBLIC = true;
 export const XO_TESTERS = ["Erhembayr"];
 
 export function canStartXo(role: string | undefined, userName?: string | null) {
-  return XO_PUBLIC || role === "ADMIN" || (!!userName && XO_TESTERS.includes(userName));
+  return XO_PUBLIC || role === "ADMIN" || (!!userName && XO_TESTERS.some((n) => sameName(n, userName)));
 }

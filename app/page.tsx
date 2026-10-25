@@ -7,6 +7,7 @@ import BusSeatPanel from "./_components/BusSeatPanel";
 import { gamesClosedUntil } from "@/lib/games";
 import { canSeeCleaning, groupIndexFor, type Roster } from "@/lib/cleaning";
 import AppHeader from "./_components/AppHeader";
+import { sameName } from "@/lib/names";
 
 const MON_DAYS = ["Ням", "Даваа", "Мягмар", "Лхагва", "Пүрэв", "Баасан", "Бямба"];
 
@@ -61,7 +62,7 @@ export default function HomePage() {
   const gameClosed = now ? gamesClosedUntil(now.getTime()) !== null : false;
   const cleanIdx = cleaning ? groupIndexFor(cleaning.today, cleaning) : null;
   const cleanMembers = cleanIdx !== null ? (cleaning?.groups[cleanIdx] ?? []) : [];
-  const onDuty = cleanMembers.includes(me);
+  const onDuty = cleanMembers.some((n) => sameName(n, me));
   const cleanNames = cleanMembers
     .map((n) => cleaning?.users.find((u) => u.name === n)?.fullName || n)
     .join(", ");
@@ -260,7 +261,7 @@ export default function HomePage() {
             <div className="flex-1 min-w-0">
               <p className="font-black text-sm">Тоглоом</p>
               <p className="text-[10px] text-on-surface-muted">
-                {gameClosed ? "🔒 Түр хаалттай" : "2048 • BLOCK!!! • MASHIN"}
+                {gameClosed ? "🔒 Түр хаалттай" : "2048 • BLOCK!!! • MASHIN • X O"}
               </p>
             </div>
             {/* Жижиг хавтангууд */}

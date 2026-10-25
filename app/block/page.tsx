@@ -41,6 +41,7 @@ import {
   type Action,
   type Kind,
 } from "@/lib/block";
+import { sameName } from "@/lib/names";
 
 const KEYBINDS: [string[], string][] = [
   [["←", "A"], "Зүүн"],
@@ -613,7 +614,7 @@ export default function BlockPage() {
                   <li
                     key={r.userName}
                     className={`flex items-center gap-2.5 rounded-2xl px-2.5 py-2 ${
-                      r.userName === me ? "bg-accent/15 border border-accent/30" : "bg-surface-alt/50"
+                      sameName(r.userName, me) ? "bg-accent/15 border border-accent/30" : "bg-surface-alt/50"
                     }`}
                   >
                     <span className={`w-5 text-center text-xs font-black ${i === 0 ? "text-amber-400" : "text-on-surface-muted"}`}>

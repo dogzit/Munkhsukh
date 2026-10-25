@@ -32,7 +32,7 @@ export async function GET(req: Request) {
     });
 
     const roles = await getMyRoles(req);
-    return NextResponse.json({ games, stats, users, canStart: canStartXo(roles?.role, me) });
+    return NextResponse.json({ me, games, stats, users, canStart: canStartXo(roles?.role, me) });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

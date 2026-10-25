@@ -16,6 +16,7 @@ import {
   weekday,
   type Roster,
 } from "@/lib/cleaning";
+import { sameName } from "@/lib/names";
 
 type U = { name: string; fullName: string | null; avatar: string | null };
 type Data = Roster & { today: string; users: U[] };
@@ -96,8 +97,8 @@ export default function CleaningPage() {
   const next = roster && today ? upcoming(roster, today, Math.max(roster.groups.length, 1)) : [];
   const nextDuty = next.find((x) => x.date !== today) ?? null;
   const todayMembers = todayIdx !== null ? (roster?.groups[todayIdx] ?? []) : [];
-  const iAmOnDuty = todayMembers.includes(me);
-  const myNext = next.find((x) => roster?.groups[x.index]?.includes(me));
+  const iAmOnDuty = todayMembers.some((n) => sameName(n, me));
+  const myNext = next.find((x) => roster?.groups[x.index]?.some((n) => sameName(n, me)));
 
   const startEdit = () => {
     if (!data) return;
@@ -211,7 +212,7 @@ export default function CleaningPage() {
                             key={n}
                             className={`flex items-center gap-2 rounded-2xl px-2.5 py-2 ${
                               iAmOnDuty ? "bg-white/20" : "bg-emerald-500/15"
-                            } ${n === me ? "ring-2 ring-white" : ""}`}
+                            } ${sameName(n, me) ? "ring-2 ring-white" : ""}`}
                           >
                             <Avatar u={userMap.get(n)} />
                             <span className="text-sm font-bold truncate">{nameOf(n)}</span>
@@ -359,7 +360,7 @@ export default function CleaningPage() {
                     {next.map(({ date, index }) => {
                       const members = data.groups[index] ?? [];
                       const isToday = date === today;
-                      const mine = members.includes(me);
+                      const mine = members.some((n) => sameName(n, me));
                       return (
                         <li
                           key={date}
