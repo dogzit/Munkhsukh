@@ -26,6 +26,8 @@ import { canPlayBlock } from "@/lib/games";
 
 import {
   CLEAR_MS,
+  LOCK_MS,
+  MAX_LOCK_MOVES,
   COLORS,
   COLS,
   ROWS,
@@ -33,6 +35,7 @@ import {
   cellsOf,
   dropDistance,
   fresh,
+  grounded,
   reducer,
   speedFor,
   type Action,
@@ -56,42 +59,71 @@ type TopRow = {
   bestTile: number;
 };
 
+/** Tetris-ийн DAS/ARR: эхлээд нэг алхна, DAS хүлээгээд ARR тутамд давтагдана */
+const DAS_MS = 150;
+const ARR_MS = 40;
+const SOFT_MS = 35;
+
 /** Дарж байх хугацаандаа давтагддаг товч (зүүн/баруун/доош) */
 function HoldButton({
   onFire,
   repeat = true,
+  delay = DAS_MS,
+  rate = ARR_MS,
   label,
   children,
   className = "",
 }: {
   onFire: () => void;
   repeat?: boolean;
+  delay?: number;
+  rate?: number;
   label: string;
   children: React.ReactNode;
   className?: string;
 }) {
+  const fire = useRef(onFire);
+  useEffect(() => {
+    fire.current = onFire;
+  });
   const timers = useRef<{ t?: ReturnType<typeof setTimeout>; i?: ReturnType<typeof setInterval> }>({});
-  const stop = () => {
+  const [down, setDown] = useState(false);
+  const stop = useCallback(() => {
     clearTimeout(timers.current.t);
     clearInterval(timers.current.i);
+    timers.current = {};
+    setDown(false);
+  }, []);
+  useEffect(() => stop, [stop]);
+  const start = () => {
+    stop();
+    setDown(true);
+    fire.current();
+    if (repeat) {
+      timers.current.t = setTimeout(() => {
+        timers.current.i = setInterval(() => fire.current(), rate);
+      }, delay);
+    }
   };
-  useEffect(() => stop, []);
   return (
     <button
       type="button"
       aria-label={label}
       onPointerDown={(e) => {
         e.preventDefault();
-        onFire();
-        if (repeat) timers.current.t = setTimeout(() => (timers.current.i = setInterval(onFire, 55)), 170);
+        // Хуруу товчноос бага зэрэг гулсаад ч давталт тасрахгүй
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch { /* */ }
+        start();
       }}
       onPointerUp={stop}
-      onPointerLeave={stop}
       onPointerCancel={stop}
+      onLostPointerCapture={stop}
       onContextMenu={(e) => e.preventDefault()}
       className={`h-14 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center
-        active:scale-95 active:bg-card-hover select-none ${className}`}
-      style={{ touchAction: "none" }}
+        select-none transition-transform ${down ? "scale-95 bg-card-hover" : ""} ${className}`}
+      style={{ touchAction: "none", WebkitTouchCallout: "none", WebkitUserSelect: "none" }}
     >
       {children}
     </button>
@@ -166,6 +198,14 @@ export default function BlockPage() {
     return () => clearInterval(id);
   }, [s.started, s.over, s.paused, s.level]);
 
+  // Газардсан дүрс LOCK_MS хүлээгээд тогтоно — хөдөлгөх/эргүүлэх бүрт хугацаа шинэчлэгдэнэ
+  const isGrounded = s.started && !s.over && !s.paused && !s.clearing && grounded(s);
+  useEffect(() => {
+    if (!isGrounded) return;
+    const t = setTimeout(() => dispatch({ type: "lock" }), s.lockMoves >= MAX_LOCK_MOVES ? 0 : LOCK_MS);
+    return () => clearTimeout(t);
+  }, [isGrounded, s.piece, s.lockMoves]);
+
   // Мөр гялсхийж дуусахад устгана
   useEffect(() => {
     if (!s.clearing) return;
@@ -193,26 +233,71 @@ export default function BlockPage() {
       .catch(() => {});
   }, [s.over, s.score, s.lines, allowed, loadTop]);
 
+  // Гар: үйлдлийн системийн удаан давталтын оронд Tetris шиг DAS/ARR
+  const keyTimers = useRef(new Map<string, { t?: ReturnType<typeof setTimeout>; i?: ReturnType<typeof setInterval> }>());
   useEffect(() => {
+    const timers = keyTimers.current;
+    const release = (code: string) => {
+      const h = timers.get(code);
+      if (!h) return;
+      clearTimeout(h.t);
+      clearInterval(h.i);
+      timers.delete(code);
+    };
+    const hold = (code: string, a: Action, delay: number, rate: number) => {
+      release(code);
+      dispatch(a);
+      const h: { t?: ReturnType<typeof setTimeout>; i?: ReturnType<typeof setInterval> } = {};
+      h.t = setTimeout(() => (h.i = setInterval(() => dispatch(a), rate)), delay);
+      timers.set(code, h);
+    };
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
       const k = e.key;
+      const left = k === "ArrowLeft" || k === "a" || k === "A";
+      const right = k === "ArrowRight" || k === "d" || k === "D";
+      const softKey = k === "ArrowDown" || k === "s" || k === "S";
+      if (left || right || softKey) {
+        e.preventDefault();
+        if (e.repeat) return;
+        if (left) {
+          release("R");
+          hold("L", { type: "move", dx: -1 }, DAS_MS, ARR_MS);
+        } else if (right) {
+          release("L");
+          hold("R", { type: "move", dx: 1 }, DAS_MS, ARR_MS);
+        } else hold("D", { type: "soft" }, SOFT_MS, SOFT_MS);
+        return;
+      }
       let a: Action | null = null;
-      if (k === "ArrowLeft" || k === "a" || k === "A") a = { type: "move", dx: -1 };
-      else if (k === "ArrowRight" || k === "d" || k === "D") a = { type: "move", dx: 1 };
-      else if (k === "ArrowUp" || k === "w" || k === "W" || k === "x" || k === "X") a = { type: "rotate" };
-      else if (k === "ArrowDown" || k === "s" || k === "S") a = { type: "soft" };
+      if (k === "ArrowUp" || k === "w" || k === "W" || k === "x" || k === "X") a = { type: "rotate" };
       // Тоглоом дууссаны дараа Space-ээр шууд дахин эхлэхгүй (санамсаргүй дарагдахаас сэргийлнэ)
       else if (k === " ") a = !s.started ? { type: "start" } : s.over ? null : { type: "hard" };
       else if (k === "p" || k === "P" || k === "Escape") a = { type: "pause" };
       if (k === " ") e.preventDefault();
       if (!a) return;
       e.preventDefault();
+      // Эргүүлэх, унагаахыг барьж байхад давтахгүй
+      if (e.repeat && a.type !== "pause") return;
       dispatch(a);
     };
+    const onUp = (e: KeyboardEvent) => {
+      const k = e.key;
+      if (k === "ArrowLeft" || k === "a" || k === "A") release("L");
+      else if (k === "ArrowRight" || k === "d" || k === "D") release("R");
+      else if (k === "ArrowDown" || k === "s" || k === "S") release("D");
+    };
+    const releaseAll = () => [...timers.keys()].forEach(release);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keyup", onUp);
+    window.addEventListener("blur", releaseAll);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keyup", onUp);
+      window.removeEventListener("blur", releaseAll);
+      releaseAll();
+    };
   }, [s.started, s.over]);
 
   // Талбар дээр: хажуу тийш чирэхэд хөдөлнө, товшвол эргэнэ, доош хурдан шударвал шууд унана
@@ -470,7 +555,7 @@ export default function BlockPage() {
               <HoldButton label="Эргүүлэх" repeat={false} onFire={() => dispatch({ type: "rotate" })} className="bg-accent/15 border-accent/40">
                 <RotateCw size={22} className="text-accent" />
               </HoldButton>
-              <HoldButton label="Доош" onFire={() => dispatch({ type: "soft" })}>
+              <HoldButton label="Доош" delay={SOFT_MS} rate={SOFT_MS} onFire={() => dispatch({ type: "soft" })}>
                 <ChevronDown size={24} />
               </HoldButton>
               <HoldButton label="Шууд унагаах" repeat={false} onFire={() => dispatch({ type: "hard" })}>

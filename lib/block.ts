@@ -48,6 +48,8 @@ export type State = {
   pendingBonus: number;
   // Мөр устгасны дараах "+800 BLOCK!!!" бичиг (id нь хөдөлгөөнийг дахин эхлүүлнэ)
   popup: { id: number; label: string; pts: number; lines: number } | null;
+  // Газардсан дүрсийг тогтохоос өмнө хөдөлгөсөн/эргүүлсэн тоо (хязгааргүй хүлээлгэхгүйн тулд)
+  lockMoves: number;
 };
 
 export type Action =
@@ -56,6 +58,7 @@ export type Action =
   | { type: "soft" }
   | { type: "hard" }
   | { type: "tick" }
+  | { type: "lock" }
   | { type: "pause"; value?: boolean }
   | { type: "start" }
   | { type: "finishClear" };
@@ -118,16 +121,29 @@ export function fresh(started: boolean): State {
     clearing: null,
     pendingBonus: 0,
     popup: null,
+    lockMoves: 0,
   };
 }
 
 export const CLEAR_LABELS = ["", "SINGLE", "DOUBLE", "TRIPLE", "BLOCK!!!"];
 export const CLEAR_MS = 320;
+/** Газардсаны дараа тогтох хүртэлх хугацаа ба дахин хойшлуулах дээд тоо (орчин үеийн Tetris шиг) */
+export const LOCK_MS = 500;
+export const MAX_LOCK_MOVES = 15;
+
+export function grounded(s: State) {
+  return !fits(s.board, { ...s.piece, y: s.piece.y + 1 });
+}
+
+/** Газардсан дүрс хөдөлбөл тогтох хугацаа дахин эхэлнэ */
+function moved(s: State, piece: Piece): State {
+  return { ...s, piece, lockMoves: grounded(s) ? s.lockMoves + 1 : s.lockMoves };
+}
 
 export function spawnNext(s: State, board: (Kind | null)[]): State {
   const piece = spawn(s.next);
   const [next, bag] = draw(s.bag);
-  return { ...s, board, piece, next, bag, over: !fits(board, piece) };
+  return { ...s, board, piece, next, bag, lockMoves: 0, over: !fits(board, piece) };
 }
 
 /** Дүрсийг байранд нь тогтооно — дүүрсэн мөр байвал эхлээд гялсхийлгэнэ */
@@ -180,7 +196,7 @@ export function reducer(s: State, a: Action): State {
   switch (a.type) {
     case "move": {
       const p = { ...s.piece, x: s.piece.x + a.dx };
-      return fits(s.board, p) ? { ...s, piece: p } : s;
+      return fits(s.board, p) ? moved(s, p) : s;
     }
     case "rotate": {
       if (s.piece.k === "O") return s;
@@ -188,7 +204,7 @@ export function reducer(s: State, a: Action): State {
       // Хананд наалдсан үед хажуу тийш түлхэж эргүүлнэ
       for (const dx of [0, -1, 1, -2, 2]) {
         const p = { ...s.piece, m, x: s.piece.x + dx };
-        if (fits(s.board, p)) return { ...s, piece: p };
+        if (fits(s.board, p)) return moved(s, p);
       }
       return s;
     }
@@ -196,8 +212,11 @@ export function reducer(s: State, a: Action): State {
     case "tick": {
       const p = { ...s.piece, y: s.piece.y + 1 };
       if (fits(s.board, p)) return { ...s, piece: p, score: s.score + (a.type === "soft" ? 1 : 0) };
-      return lock(s, s.piece);
+      // Таталцал газардсан дүрсийг шууд тогтоохгүй — LOCK_MS хүлээнэ
+      return a.type === "soft" ? lock(s, s.piece) : s;
     }
+    case "lock":
+      return grounded(s) ? lock(s, s.piece) : s;
     case "hard": {
       const d = dropDistance(s.board, s.piece);
       return lock(s, { ...s.piece, y: s.piece.y + d }, d * 2);
