@@ -377,3 +377,17 @@ model XoGame {
   @@index([challenger, status])
   @@index([opponent, status])
 }
+
+// --- Санал хүсэлт (сурагчид хиилгэх/засуулахыг хүссэн зүйлээ бичнэ) ---
+model Suggestion {
+  id        String    @id @default(nanoid())
+  userName  String
+  text      String
+  // NEW — шинэ, SEEN — админ харсан, DONE — хийгдсэн
+  status    String    @default("NEW")
+  adminNote String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([status, createdAt])
+}

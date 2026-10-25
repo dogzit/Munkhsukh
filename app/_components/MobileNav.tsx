@@ -25,10 +25,12 @@ import {
   BarChart3,
   Megaphone,
   CalendarOff,
+  Lightbulb,
 } from "lucide-react";
 import { useMyRoles } from "./useMyRoles";
 import { canUseLeave } from "@/lib/leave";
 import { canSeeCleaning } from "@/lib/cleaning";
+import { canSuggest } from "@/lib/suggestions";
 
 type NavItem = { icon: LucideIcon; label: string; href: string };
 
@@ -83,6 +85,9 @@ export default function MobileNav() {
       : []),
     ...(canSeeCleaning(roles?.role)
       ? [{ icon: Sparkles, label: "Цэвэрлэгээ", href: "/cleaning", color: "from-emerald-500 to-green-600" }]
+      : []),
+    ...(canSuggest(roles?.role)
+      ? [{ icon: Lightbulb, label: "Санал хүсэлт", href: "/suggestions", color: "from-amber-400 to-orange-500" }]
       : []),
     ...(isAdmin
       ? [{ icon: Shield, label: "Админ панел", href: "/admin", color: "from-rose-500 to-pink-500" }]

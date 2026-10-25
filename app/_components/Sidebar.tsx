@@ -6,6 +6,7 @@ import LogoutConfirm from "./LogoutConfirm";
 import { useMyRoles } from "./useMyRoles";
 import { canUseLeave } from "@/lib/leave";
 import { canSeeCleaning } from "@/lib/cleaning";
+import { canSuggest } from "@/lib/suggestions";
 import {
   Gamepad2,
   Sparkles,
@@ -29,6 +30,7 @@ import {
   BarChart3,
   Megaphone,
   CalendarOff,
+  Lightbulb,
 } from "lucide-react";
 
 const navItems = [
@@ -146,6 +148,9 @@ export default function Sidebar() {
             : []),
           ...(canSeeCleaning(roles?.role)
             ? [{ icon: <Sparkles size={20} />, label: "Цэвэрлэгээ", href: "/cleaning" }]
+            : []),
+          ...(canSuggest(roles?.role)
+            ? [{ icon: <Lightbulb size={20} />, label: "Санал хүсэлт", href: "/suggestions" }]
             : []),
         ].map((item) => {
           const active = isActive(pathname, item.href);
