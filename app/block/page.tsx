@@ -542,15 +542,15 @@ export default function BlockPage() {
                     <p className={`text-base font-black tabular-nums truncate ${label === "Рекорд" ? "text-amber-400" : ""}`}>{v}</p>
                   </div>
                 ))}
-                <div className="grid grid-cols-[1fr_auto] gap-3">
+                {/* 84px-ийн нарийн баганад багтаахын тулд дээрээ дороо нь байрлуулж, бие биенээсээ зайтай болгов */}
+                <div className="space-y-1.5">
                   <button
                     onClick={() => dispatch({ type: "pause" })}
                     disabled={!s.started || s.over}
                     aria-label={s.paused ? "Үргэлжлүүлэх" : "Түр зогсоох"}
-                    className="h-10 rounded-xl bg-surface-elevated border border-border flex items-center justify-center gap-1.5 text-xs font-bold disabled:opacity-40 active:scale-95"
+                    className="w-full h-10 rounded-xl bg-surface-elevated border border-border flex items-center justify-center disabled:opacity-40 active:scale-95"
                   >
                     {s.paused ? <Play size={15} /> : <Pause size={15} />}
-                    {s.paused ? "Үргэлжлүүлэх" : "Түр зогсоох"}
                   </button>
                   <button
                     onClick={() => {
@@ -559,14 +559,14 @@ export default function BlockPage() {
                       dispatch({ type: "start" });
                     }}
                     aria-label="Шинээр эхлэх"
-                    className="h-10 w-10 rounded-xl bg-surface-elevated border border-border flex items-center justify-center active:scale-95"
+                    className="w-full h-10 rounded-xl bg-surface-elevated border border-border flex items-center justify-center active:scale-95"
                   >
                     <RotateCcw size={15} />
                   </button>
                   <button
                     onClick={toggleFull}
                     aria-label={full ? "Жижигрүүлэх" : "Дэлгэц дүүргэх"}
-                    className="col-span-2 h-10 rounded-xl bg-accent/15 border border-accent/40 text-accent flex items-center justify-center gap-1.5 text-[11px] font-black active:scale-95"
+                    className="w-full h-10 rounded-xl bg-accent/15 border border-accent/40 text-accent flex items-center justify-center gap-1.5 text-[11px] font-black active:scale-95"
                   >
                     {full ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
                     {full ? "Жижиг" : "Томруулах"}
