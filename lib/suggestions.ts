@@ -1,5 +1,5 @@
-// Санал хүсэлт хэсэг — эхлээд зөвхөн админд, дараа нь нээлттэй болгоно
-export const SUGGESTIONS_PUBLIC = false;
+// Санал хүсэлт хэсэг — бүх хэрэглэгчид нээлттэй
+export const SUGGESTIONS_PUBLIC = true;
 
 export function canSuggest(role: string | undefined) {
   return SUGGESTIONS_PUBLIC || role === "ADMIN";
