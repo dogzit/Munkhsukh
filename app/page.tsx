@@ -83,10 +83,12 @@ export default function HomePage() {
           onClick={() => router.push("/suggestions")}
           aria-label="Санал хүсэлт"
           title="Санал хүсэлт"
-          className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-surface-elevated border border-border
-            hover:bg-card-hover active:scale-95 transition-all shrink-0 text-amber-400"
+          className="px-2.5 sm:px-3 h-9 sm:h-10 rounded-xl sm:rounded-2xl bg-surface-elevated border border-border
+            hover:bg-card-hover active:scale-95 transition-all shrink-0 text-amber-400
+            flex items-center gap-1.5"
         >
-          <Lightbulb size={18} />
+          <Lightbulb size={16} />
+          <span className="text-[11px] font-bold leading-none whitespace-nowrap">Санал</span>
         </button>
       </AppHeader>
 
@@ -283,26 +285,6 @@ export default function HomePage() {
             <ArrowRight size={14} className="text-on-surface-muted/40 group-hover:text-on-surface-muted transition-colors" />
           </button>
         </div>
-
-        {/* Санал хүсэлт */}
-        <button
-          onClick={() => router.push("/suggestions")}
-          className={`group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl
-            p-4 mb-6 w-full text-left flex items-center gap-3
-            hover:border-amber-500/30 hover:bg-amber-500/[0.04]
-            active:scale-[0.97] transition-all duration-300 ${
-              mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}
-        >
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
-            <Lightbulb size={20} className="text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-black text-sm">Санал хүсэлт</p>
-            <p className="text-[10px] text-on-surface-muted">Юу хиилгэх, засуулахыг хүсэж байна вэ?</p>
-          </div>
-          <ArrowRight size={14} className="text-on-surface-muted/40 group-hover:text-on-surface-muted transition-colors" />
-        </button>
 
         {/* Bus booking panel — admin-аас асаах/унтраах боломжтой */}
         {busEnabled === true ? (
