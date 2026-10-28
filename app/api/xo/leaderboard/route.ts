@@ -1,15 +1,9 @@
 import prisma from "@/lib/prisma";
-import { getMyRoles } from "@/lib/roles";
 import { NextResponse } from "next/server";
 
-/** GET — X O тулаануудаас бүх сурагчдын ялалт/тэнцэл/хожигдлын жагсаалт (одоохондоо зөвхөн админ) */
-export async function GET(req: Request) {
+/** GET — X O тулаануудаас бүх сурагчдын ялалт/тэнцэл/хожигдлын жагсаалт */
+export async function GET() {
   try {
-    const roles = await getMyRoles(req);
-    if (roles?.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const done = await prisma.xoGame.findMany({
       where: { status: "DONE" },
       select: { challenger: true, opponent: true, winner: true },

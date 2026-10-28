@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trophy, Loader2 } from "lucide-react";
 import AppHeader from "@/app/_components/AppHeader";
-import { useMyRoles } from "@/app/_components/useMyRoles";
 
 type Row = {
   name: string;
@@ -20,23 +19,14 @@ const MEDAL = ["🥇", "🥈", "🥉"];
 
 export default function XoLeaderboardPage() {
   const router = useRouter();
-  const { roles } = useMyRoles();
-  const isAdmin = roles?.role === "ADMIN";
   const [rows, setRows] = useState<Row[] | null>(null);
 
   useEffect(() => {
-    if (roles && !isAdmin) router.replace("/xo");
-  }, [roles, isAdmin, router]);
-
-  useEffect(() => {
-    if (!isAdmin) return;
     fetch("/api/xo/leaderboard", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setRows(Array.isArray(d) ? d : []))
       .catch(() => setRows([]));
-  }, [isAdmin]);
-
-  if (!roles || !isAdmin) return <div className="min-h-screen bg-surface" />;
+  }, []);
 
   return (
     <div className="min-h-screen bg-surface text-on-surface font-sans">
