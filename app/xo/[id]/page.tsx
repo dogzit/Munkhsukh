@@ -119,7 +119,13 @@ export default function XoGamePage({ params }: { params: Promise<{ id: string }>
     // Шууд харагдуулна, сервер баталгаажуулна
     const mark = game.challenger === me ? "X" : "O";
     const other = game.challenger === me ? game.opponent : game.challenger;
-    setGame({ ...game, board: game.board.slice(0, cell) + mark + game.board.slice(cell + 1), turn: other });
+    const field = mark === "X" ? "xCells" : "oCells";
+    const prevCells = game[field].split("").map(Number);
+    const removed = prevCells.length >= 3 ? prevCells[0] : null;
+    let board = removed !== null ? game.board.slice(0, removed) + "." + game.board.slice(removed + 1) : game.board;
+    board = board.slice(0, cell) + mark + board.slice(cell + 1);
+    const newCells = (removed !== null ? prevCells.slice(1) : prevCells).concat(cell).join("");
+    setGame({ ...game, board, turn: other, [field]: newCells });
     send({ action: "move", cell });
   };
 
@@ -228,7 +234,7 @@ export default function XoGamePage({ params }: { params: Promise<{ id: string }>
                     onClick={() => move(i)}
                     disabled={!can}
                     aria-label={`Нүд ${i + 1}`}
-                    className={`rounded-2xl flex items-center justify-center text-6xl sm:text-7xl font-black transition-all
+                    className={`rounded-2xl flex items-center justify-center text-6xl sm:text-7xl font-black transition-transform
                       ${can ? "hover:bg-card-hover active:scale-95 cursor-pointer" : ""}
                       ${hit ? "scale-105" : ""}`}
                     style={{
