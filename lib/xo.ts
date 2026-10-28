@@ -37,3 +37,18 @@ export function emptyCells(board: string): number[] {
   for (let i = 0; i < board.length; i++) if (board[i] === ".") out.push(i);
   return out;
 }
+
+// Нэг тоглогч самбар дээр дандаа тэнцэхээс сэргийлэхийн тулд нэгэн зэрэг ихдээ 3 тэмдэгтэй
+// (хуучин тавьсан тэмдэг нь шинээр тавих үед арилна — "дараалсан" тоглоом)
+export const MAX_MARKS_PER_PLAYER = 3;
+// Онол дээр мөчлөгт орсон тохиолдолд тулаан дуусахгүй болохоос сэргийлэх хамгаалалт
+export const MAX_TOTAL_MOVES = 30;
+
+/** Тэмдгийн дараалалд (жишээ нь "358") шинэ нүд нэмнэ; дүүрсэн бол хамгийн хуучин нь арилна */
+export function pushCell(cells: string, cell: number): { cells: string; removed: number | null } {
+  const arr = cells.split("").map(Number);
+  let removed: number | null = null;
+  if (arr.length >= MAX_MARKS_PER_PLAYER) removed = arr.shift()!;
+  arr.push(cell);
+  return { cells: arr.join(""), removed };
+}

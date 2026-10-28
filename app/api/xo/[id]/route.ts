@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { emptyCells, isFull, markOf, TURN_MS, winLine } from "@/lib/xo";
+import { emptyCells, markOf, MAX_TOTAL_MOVES, pushCell, TURN_MS, winLine } from "@/lib/xo";
 import { getMyRoles } from "@/lib/roles";
 import { canStartXo } from "@/lib/games";
 import { displayName, xoNotify } from "@/lib/xoNotify";
@@ -13,23 +13,27 @@ async function applyTimeout(id: string, game: XoGame): Promise<XoGame> {
   if (game.status !== "ACTIVE" || !game.turn || !game.turnExpiresAt || game.turnExpiresAt > new Date()) {
     return game;
   }
-  const cells = emptyCells(game.board);
-  if (cells.length === 0) return game;
+  const empty = emptyCells(game.board);
+  if (empty.length === 0) return game;
   const timedOut = game.turn;
-  const cell = cells[Math.floor(Math.random() * cells.length)];
+  const cell = empty[Math.floor(Math.random() * empty.length)];
   const mark = markOf(game, timedOut)!;
-  const board = game.board.slice(0, cell) + mark + game.board.slice(cell + 1);
+  const field = mark === "X" ? "xCells" : "oCells";
+  const { cells: newCells, removed } = pushCell(game[field], cell);
+  let board = removed !== null ? game.board.slice(0, removed) + "." + game.board.slice(removed + 1) : game.board;
+  board = board.slice(0, cell) + mark + board.slice(cell + 1);
+  const moveCount = game.moveCount + 1;
   const won = winLine(board) !== null;
-  const draw = !won && isFull(board);
+  const draw = !won && moveCount >= MAX_TOTAL_MOVES;
   const other = game.challenger === timedOut ? game.opponent : game.challenger;
 
   const res = await prisma.xoGame.updateMany({
     where: { id, board: game.board, turn: timedOut, status: "ACTIVE", turnExpiresAt: game.turnExpiresAt },
     data: won
-      ? { board, status: "DONE", winner: timedOut, turn: null, turnExpiresAt: null }
+      ? { board, [field]: newCells, moveCount, status: "DONE", winner: timedOut, turn: null, turnExpiresAt: null }
       : draw
-        ? { board, status: "DONE", winner: "DRAW", turn: null, turnExpiresAt: null }
-        : { board, turn: other, turnExpiresAt: new Date(Date.now() + TURN_MS) },
+        ? { board, [field]: newCells, moveCount, status: "DONE", winner: "DRAW", turn: null, turnExpiresAt: null }
+        : { board, [field]: newCells, moveCount, turn: other, turnExpiresAt: new Date(Date.now() + TURN_MS) },
   });
 
   if (res.count) {
@@ -138,18 +142,22 @@ export async function PATCH(req: Request, { params }: Ctx) {
         return NextResponse.json({ error: "Буруу нүүдэл" }, { status: 400 });
       }
       const mark = markOf(game, me)!;
-      const board = game.board.slice(0, cell) + mark + game.board.slice(cell + 1);
+      const field = mark === "X" ? "xCells" : "oCells";
+      const { cells: newCells, removed } = pushCell(game[field], cell);
+      let board = removed !== null ? game.board.slice(0, removed) + "." + game.board.slice(removed + 1) : game.board;
+      board = board.slice(0, cell) + mark + board.slice(cell + 1);
+      const moveCount = game.moveCount + 1;
       const won = winLine(board) !== null;
-      const draw = !won && isFull(board);
+      const draw = !won && moveCount >= MAX_TOTAL_MOVES;
 
       // Хоёр хүсэлт зэрэг ирвэл зөвхөн нэг нь л хүчинтэй (самбар өөрчлөгдөөгүй үед)
       const res = await prisma.xoGame.updateMany({
         where: { id, board: game.board, turn: me, status: "ACTIVE" },
         data: won
-          ? { board, status: "DONE", winner: me, turn: null, turnExpiresAt: null }
+          ? { board, [field]: newCells, moveCount, status: "DONE", winner: me, turn: null, turnExpiresAt: null }
           : draw
-            ? { board, status: "DONE", winner: "DRAW", turn: null, turnExpiresAt: null }
-            : { board, turn: other, turnExpiresAt: new Date(Date.now() + TURN_MS) },
+            ? { board, [field]: newCells, moveCount, status: "DONE", winner: "DRAW", turn: null, turnExpiresAt: null }
+            : { board, [field]: newCells, moveCount, turn: other, turnExpiresAt: new Date(Date.now() + TURN_MS) },
       });
       if (!res.count) return NextResponse.json({ error: "Самбар өөрчлөгдсөн байна" }, { status: 409 });
 

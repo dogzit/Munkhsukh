@@ -371,6 +371,10 @@ model XoGame {
   turn       String?
   // Нүүдэл хийх эцсийн хугацаа — дуусвал санамсаргүй тавилт хийгдэнэ (жинхэнэ XO шиг цаг хязгаартай)
   turnExpiresAt DateTime?
+  // Тэмдэг бүрийн тавьсан дараалал (нүдний индекс, тоо бүр 1 тэмдэгт) — 3-аас хэтэрвэл хамгийн хуучин нь арилна
+  xCells     String   @default("")
+  oCells     String   @default("")
+  moveCount  Int      @default(0)
   // Ялагчийн нэр, тэнцвэл "DRAW"
   winner     String?
   createdAt  DateTime @default(now())
