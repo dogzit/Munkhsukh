@@ -222,22 +222,15 @@ export default function XoGamePage({ params }: { params: Promise<{ id: string }>
               {game.board.split("").map((c, i) => {
                 const hit = line?.includes(i);
                 const can = myTurn && c === ".";
-                const fading =
-                  game.status === "ACTIVE" &&
-                  !hit &&
-                  ((c === "X" && game.xCells.length >= 3 && Number(game.xCells[0]) === i) ||
-                    (c === "O" && game.oCells.length >= 3 && Number(game.oCells[0]) === i));
                 return (
                   <button
                     key={i}
                     onClick={() => move(i)}
                     disabled={!can}
                     aria-label={`Нүд ${i + 1}`}
-                    title={fading ? "Дараагийн нүүдэлд арилна" : undefined}
                     className={`rounded-2xl flex items-center justify-center text-6xl sm:text-7xl font-black transition-all
                       ${can ? "hover:bg-card-hover active:scale-95 cursor-pointer" : ""}
-                      ${hit ? "scale-105" : ""}
-                      ${fading ? "animate-pulse" : ""}`}
+                      ${hit ? "scale-105" : ""}`}
                     style={{
                       background: hit
                         ? c === "X"
@@ -245,7 +238,6 @@ export default function XoGamePage({ params }: { params: Promise<{ id: string }>
                           : "rgba(14,165,233,0.25)"
                         : "color-mix(in oklab, var(--color-on-surface) 6%, transparent)",
                       color: c === "X" ? "#f43f5e" : "#0ea5e9",
-                      opacity: fading ? 0.35 : 1,
                       textShadow: hit ? `0 0 18px ${c === "X" ? "#f43f5e" : "#0ea5e9"}` : undefined,
                     }}
                   >
@@ -255,11 +247,6 @@ export default function XoGamePage({ params }: { params: Promise<{ id: string }>
               })}
             </div>
           </div>
-          {(game.xCells.length >= 3 || game.oCells.length >= 3) && game.status === "ACTIVE" && (
-            <p className="mt-2 text-center text-[10px] text-on-surface-muted">
-              👻 Бүдэг тэмдэг = дараагийн нүүдэлд арилна
-            </p>
-          )}
 
           {/* Үйлдлүүд */}
           <div className="mt-4 flex gap-2">
