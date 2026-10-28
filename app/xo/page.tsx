@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Swords, Search, Loader2, Check, X as XIcon, ChevronRight } from "lucide-react";
+import { Swords, Search, Loader2, Check, X as XIcon, ChevronRight, Trophy } from "lucide-react";
 import AppHeader from "@/app/_components/AppHeader";
+import { useMyRoles } from "@/app/_components/useMyRoles";
 
 type U = { name: string; fullName: string | null; avatar: string | null };
 type XoGame = {
@@ -59,6 +60,7 @@ function MiniBoard({ board }: { board: string }) {
 
 export default function XoLobby() {
   const router = useRouter();
+  const { roles } = useMyRoles();
   const [data, setData] = useState<Data | null>(null);
   const [students, setStudents] = useState<U[]>([]);
   const [q, setQ] = useState("");
@@ -174,7 +176,19 @@ export default function XoLobby() {
             <Swords size={15} className="text-white" />
           </span>
         }
-      />
+      >
+        {roles?.role === "ADMIN" && (
+          <button
+            onClick={() => router.push("/xo/leaderboard")}
+            aria-label="Тэргүүлэгчид"
+            title="Тэргүүлэгчид"
+            className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-surface-elevated border border-border
+              hover:bg-card-hover active:scale-95 transition-all shrink-0 text-amber-400"
+          >
+            <Trophy size={18} />
+          </button>
+        )}
+      </AppHeader>
 
       <div className="px-3 py-4 sm:p-6">
         <div className="max-w-2xl mx-auto space-y-4">
