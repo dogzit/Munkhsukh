@@ -1,21 +1,65 @@
 import prisma from "@/lib/prisma";
-import { isFull, markOf, winLine } from "@/lib/xo";
+import { emptyCells, isFull, markOf, TURN_MS, winLine } from "@/lib/xo";
 import { getMyRoles } from "@/lib/roles";
 import { canStartXo } from "@/lib/games";
 import { displayName, xoNotify } from "@/lib/xoNotify";
 import { NextResponse, after } from "next/server";
+import type { XoGame } from "@prisma/client";
 
 type Ctx = { params: Promise<{ id: string }> };
+
+/** Нүүдлийн хугацаа дуусвал санамсаргүй нүд тавиад ээлж шилжүүлнэ — жинхэнэ XO шиг цаг хязгаартай */
+async function applyTimeout(id: string, game: XoGame): Promise<XoGame> {
+  if (game.status !== "ACTIVE" || !game.turn || !game.turnExpiresAt || game.turnExpiresAt > new Date()) {
+    return game;
+  }
+  const cells = emptyCells(game.board);
+  if (cells.length === 0) return game;
+  const timedOut = game.turn;
+  const cell = cells[Math.floor(Math.random() * cells.length)];
+  const mark = markOf(game, timedOut)!;
+  const board = game.board.slice(0, cell) + mark + game.board.slice(cell + 1);
+  const won = winLine(board) !== null;
+  const draw = !won && isFull(board);
+  const other = game.challenger === timedOut ? game.opponent : game.challenger;
+
+  const res = await prisma.xoGame.updateMany({
+    where: { id, board: game.board, turn: timedOut, status: "ACTIVE", turnExpiresAt: game.turnExpiresAt },
+    data: won
+      ? { board, status: "DONE", winner: timedOut, turn: null, turnExpiresAt: null }
+      : draw
+        ? { board, status: "DONE", winner: "DRAW", turn: null, turnExpiresAt: null }
+        : { board, turn: other, turnExpiresAt: new Date(Date.now() + TURN_MS) },
+  });
+
+  if (res.count) {
+    after(async () => {
+      if (won) {
+        await xoNotify(timedOut, id, "🏆 Чи яллаа!", "Санамсаргүй тавилтаар яллаа 😅");
+        await xoNotify(other, id, "😵 Чи хожигдлоо", "Өрсөлдөгч хугацаандаа нүүгээгүй тул санамсаргүй тавилт яллаа.");
+      } else if (draw) {
+        await xoNotify(timedOut, id, "🤝 Тэнцлээ", "Хугацаа дуусаад санамсаргүй тавилт хийгдлээ.");
+        await xoNotify(other, id, "🤝 Тэнцлээ", "Хугацаа дуусаад санамсаргүй тавилт хийгдлээ.");
+      } else {
+        await xoNotify(timedOut, id, "⏱ Хугацаа дууслаа", "Нүүхгүй байхад санамсаргүй нүд тавигдлаа.");
+        await xoNotify(other, id, "⏳ Чиний ээлж!", "Өрсөлдөгч хугацаандаа нүүгээгүй тул санамсаргүй тавилт хийгдлээ.", false);
+      }
+    });
+  }
+
+  return (await prisma.xoGame.findUnique({ where: { id } }))!;
+}
 
 /** GET — тулааны төлөв (зөвхөн оролцогчид) */
 export async function GET(req: Request, { params }: Ctx) {
   try {
     const me = req.headers.get("x-user-name");
     const { id } = await params;
-    const game = await prisma.xoGame.findUnique({ where: { id } });
+    let game = await prisma.xoGame.findUnique({ where: { id } });
     if (!game || !me || markOf(game, me) === null) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+    game = await applyTimeout(id, game);
     const users = await prisma.user.findMany({
       where: { name: { in: [game.challenger, game.opponent] } },
       select: { name: true, fullName: true, avatar: true },
@@ -33,10 +77,11 @@ export async function PATCH(req: Request, { params }: Ctx) {
   try {
     const me = req.headers.get("x-user-name");
     const { id } = await params;
-    const game = await prisma.xoGame.findUnique({ where: { id } });
+    let game = await prisma.xoGame.findUnique({ where: { id } });
     if (!game || !me || markOf(game, me) === null) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+    game = await applyTimeout(id, game);
     const body = (await req.json().catch(() => null)) as { action?: unknown; cell?: unknown } | null;
     const action = body?.action;
     const other = game.challenger === me ? game.opponent : game.challenger;
@@ -48,7 +93,9 @@ export async function PATCH(req: Request, { params }: Ctx) {
       const accepted = action === "accept";
       const updated = await prisma.xoGame.update({
         where: { id },
-        data: accepted ? { status: "ACTIVE", turn: game.challenger } : { status: "DECLINED" },
+        data: accepted
+          ? { status: "ACTIVE", turn: game.challenger, turnExpiresAt: new Date(Date.now() + TURN_MS) }
+          : { status: "DECLINED" },
       });
       after(async () => {
         const name = await displayName(me);
@@ -73,7 +120,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
       if (game.status !== "ACTIVE") return NextResponse.json({ error: "Тулаан идэвхгүй" }, { status: 409 });
       const updated = await prisma.xoGame.update({
         where: { id },
-        data: { status: "DONE", winner: other, turn: null },
+        data: { status: "DONE", winner: other, turn: null, turnExpiresAt: null },
       });
       after(async () => {
         const name = await displayName(me);
@@ -99,10 +146,10 @@ export async function PATCH(req: Request, { params }: Ctx) {
       const res = await prisma.xoGame.updateMany({
         where: { id, board: game.board, turn: me, status: "ACTIVE" },
         data: won
-          ? { board, status: "DONE", winner: me, turn: null }
+          ? { board, status: "DONE", winner: me, turn: null, turnExpiresAt: null }
           : draw
-            ? { board, status: "DONE", winner: "DRAW", turn: null }
-            : { board, turn: other },
+            ? { board, status: "DONE", winner: "DRAW", turn: null, turnExpiresAt: null }
+            : { board, turn: other, turnExpiresAt: new Date(Date.now() + TURN_MS) },
       });
       if (!res.count) return NextResponse.json({ error: "Самбар өөрчлөгдсөн байна" }, { status: 409 });
 

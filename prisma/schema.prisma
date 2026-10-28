@@ -369,6 +369,8 @@ model XoGame {
   // 9 тэмдэгт: "." хоосон, "X", "O"
   board      String   @default(".........")
   turn       String?
+  // Нүүдэл хийх эцсийн хугацаа — дуусвал санамсаргүй тавилт хийгдэнэ (жинхэнэ XO шиг цаг хязгаартай)
+  turnExpiresAt DateTime?
   // Ялагчийн нэр, тэнцвэл "DRAW"
   winner     String?
   createdAt  DateTime @default(now())

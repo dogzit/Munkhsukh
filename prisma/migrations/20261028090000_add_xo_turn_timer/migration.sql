@@ -1,0 +1,1 @@
+ALTER TABLE "XoGame" ADD COLUMN "turnExpiresAt" TIMESTAMP(3);

@@ -28,3 +28,12 @@ export function isFull(board: string) {
 export function markOf(g: { challenger: string; opponent: string }, userName: string) {
   return g.challenger === userName ? "X" : g.opponent === userName ? "O" : null;
 }
+
+// Жинхэнэ X O шиг нүүдэл бүрт цаг хязгаартай — удаан бодоод дандаа тэнцэхээс сэргийлнэ
+export const TURN_MS = 12_000;
+
+export function emptyCells(board: string): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < board.length; i++) if (board[i] === ".") out.push(i);
+  return out;
+}

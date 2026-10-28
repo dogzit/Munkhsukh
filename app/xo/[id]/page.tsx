@@ -16,6 +16,7 @@ type XoGame = {
   board: string;
   turn: string | null;
   winner: string | null;
+  turnExpiresAt: string | null;
 };
 
 function Player({ u, mark, active, me }: { u?: U; mark: "X" | "O"; active: boolean; me: boolean }) {
@@ -75,9 +76,21 @@ export default function XoGamePage({ params }: { params: Promise<{ id: string }>
   const live = game?.status === "PENDING" || game?.status === "ACTIVE";
   useEffect(() => {
     if (!live) return;
-    const t = setInterval(load, 1500);
+    const t = setInterval(load, 1000);
     return () => clearInterval(t);
   }, [live, load]);
+
+  // Нүүдлийн цаг — секунд тутам шинэчлээд дүрслэнэ
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (game?.status !== "ACTIVE" || !game.turnExpiresAt) return;
+    const t = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(t);
+  }, [game?.status, game?.turnExpiresAt]);
+  const secondsLeft =
+    game?.status === "ACTIVE" && game.turnExpiresAt
+      ? Math.max(0, Math.ceil((new Date(game.turnExpiresAt).getTime() - now) / 1000))
+      : null;
 
   const send = async (body: Record<string, unknown>) => {
     setSending(true);
@@ -186,6 +199,20 @@ export default function XoGamePage({ params }: { params: Promise<{ id: string }>
           >
             {status}
           </p>
+
+          {secondsLeft !== null && (
+            <div className="mt-2 flex justify-center">
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-black border ${
+                  secondsLeft <= 3
+                    ? "bg-rose-500/15 text-rose-400 border-rose-500/30 animate-pulse"
+                    : "bg-surface-elevated text-on-surface-muted border-border"
+                }`}
+              >
+                ⏱ {secondsLeft}с
+              </span>
+            </div>
+          )}
 
           {/* Самбар */}
           <div className="mt-4 relative aspect-square rounded-3xl bg-surface-elevated border border-border p-2.5 shadow-2xl">
